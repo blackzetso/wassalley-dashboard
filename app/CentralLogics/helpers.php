@@ -57,7 +57,7 @@ class Helpers
 
     public static function product_data_formatting($data, $multi_data = false)
     {
-      
+
         $storage = [];
         if ($multi_data == true) {
             foreach ($data as $item) {
@@ -113,11 +113,11 @@ class Helpers
             }
         }
 
-      
+
       	//using pagination here
-      
+
         return  $data;
-      
+
     }
 
     public static function order_data_formatting($data, $multi_data = false)
@@ -409,6 +409,18 @@ class Helpers
                 $key_from.'='.env($key_from), $key_to.'='.$value, file_get_contents($path)
             ));
         }
+    }
+
+    /**
+     * Format the given value to currency
+     * based on saved current symbol position
+     *
+     */
+    public static function format_currency($value)
+    {
+        $currency_symbol_position = BusinessSetting::where(['key' => 'currency_symbol_position'])->first()->value;
+
+        return $currency_symbol_position=='right'?round($value,config('round_up_to_digit')).' '.self::currency_symbol():self::currency_symbol().' '.round($value, config('round_up_to_digit'));
     }
 
     public static  function remove_dir($dir) {
