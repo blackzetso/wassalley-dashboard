@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\CentralLogics\CouponLogic;
+use App\Model\Category;
 use Exception;
 
 class OrderController extends Controller
@@ -71,6 +72,15 @@ class OrderController extends Controller
             }
         }
         $deliveryMen = DeliveryMan::all();
+        $category = $request->query('category_id', 0);
+        $products = Product::when($request->category_id, function($query) use($request) {
+            $query->where('category_ids', 'LIKE', '%"id":"'.$request->category_id.'"%');
+        })
+        ->when($request->keyword, function ($query) use($request) {
+            $query->where('name', 'LIKE',"%{$request->keyword}%");
+        })
+        ->latest()->paginate(6);
+        $categories = Category::active()->get();
         $campaign_order = isset($order->details[0]->campaign) ? true : false;
         if (isset($order)) {
             //return view('admin-views.order.order-view', compact('order','editing','deliveryMen'));
@@ -78,7 +88,11 @@ class OrderController extends Controller
                 'order' => $order,
                 'editing' => $editing,
                 'deliveryMen' => $deliveryMen,
-                'campaign_order' => $campaign_order
+                'campaign_order' => $campaign_order,
+                'categories' => $categories,
+                'category' => $category,
+                'products' => $products,
+                'keyword' => $request->query('keyword', false)
             ]);
         } else {
             Toastr::info('No more orders!');
@@ -101,7 +115,7 @@ class OrderController extends Controller
         }])->where(['id' => $order->id])->Notpos()->first(); */
         $order = Order::with([
             'details',
-           'customer' => function ($query) {
+            'customer' => function ($query) {
                 return $query->withCount('orders');
             }, 'delivery_man' => function ($query) {
                 return $query->withCount('orders');
@@ -144,6 +158,20 @@ class OrderController extends Controller
         })->get();
         return response()->json([
             'view' => view('admin-views.order.partials._table', compact('orders'))->render()
+        ]);
+    }
+
+
+    public function quick_view(Request $request)
+    {
+
+        $product = $product = Product::findOrFail($request->product_id);
+        $item_type = 'product';
+        $order_id = $request->order_id;
+
+        return response()->json([
+            'success' => 1,
+            'view' => view('admin-views.order.partials._quick-view', compact('product', 'order_id', 'item_type'))->render(),
         ]);
     }
 
@@ -312,34 +340,38 @@ class OrderController extends Controller
         $cart_item = session('order_cart')[$request->key];
         $order_id = $request->order_id;
         $item_key = $request->key;
-        $product = $cart_item->product?$cart_item->product:$cart_item->campaign;
-        $item_type = $cart_item->product?'product':'campaign';
+        $product = $cart_item->product ? $cart_item->product : $cart_item->campaign;
+        $item_type = $cart_item->product ? 'product' : 'campaign';
 
         return response()->json([
             'success' => 1,
-            'view' => view('admin-views.order.partials._quick-view-cart-item', compact('order_id','product', 'cart_item', 'item_key','item_type'))->render(),
+            'view' => view('admin-views.order.partials._quick-view-cart-item', compact('order_id', 'product', 'cart_item', 'item_key', 'item_type'))->render(),
         ]);
     }
 
     public function add_to_cart(Request $request)
     {
-        if($request->item_type=='product')
-        {
+        if ($request->item_type == 'product') {
             $product = Product::find($request->id);
         }
         /* else
         {
             $product = ItemCampaign::find($request->id);
         } */
-        $data = OrderDetail::find($request->order_details_id)->replicate();
-        if($request->order_details_id)
-        {
+        $data = OrderDetail::find($request->order_details_id);
+        if ($data) {
+
+            $data = $data->replicate();
+        } else {
+            $data = new OrderDetail();
+        }
+        if ($request->order_details_id) {
             $data['id'] = $request->order_details_id;
         }
 
-        $data['product_id'] = $request->item_type=='product'?$product->id:null;
-        $data['item_campaign_id'] = $request->item_type=='campaign'?$product->id:null;
-        $data['order_id']=$request->order_id;
+        $data['product_id'] = $request->item_type == 'product' ? $product->id : null;
+        //$data['item_campaign_id'] = $request->item_type=='campaign'?$product->id:null;
+        $data['order_id'] = $request->order_id;
         $str = '';
         $price = 0;
         $addon_price = 0;
@@ -357,26 +389,20 @@ class OrderController extends Controller
         if ($request->session()->has('order_cart') && !isset($request->cart_item_key)) {
             if (count($request->session()->get('order_cart')) > 0) {
                 foreach ($request->session()->get('order_cart') as $key => $cartItem) {
-                    if ($cartItem['product_id'] == $request['id'] && $cartItem['status']==true) {
-                        if(count(json_decode($cartItem['variation'], true))>0)
-                        {
-                            if(json_decode($cartItem['variation'],true)[0]['type'] == $str)
-                            {
+                    if ($cartItem['product_id'] == $request['id'] && $cartItem['status'] == true) {
+                        if (count(json_decode($cartItem['variation'], true)) > 0) {
+                            if (json_decode($cartItem['variation'], true)[0]['type'] == $str) {
                                 return response()->json([
-                                'data' => 1
+                                    'data' => 1
                                 ]);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             return response()->json([
-                               'data' => 1
+                                'data' => 1
                             ]);
                         }
-
                     }
                 }
-
             }
         }
         //Check the string and decreases quantity for the stock
@@ -387,7 +413,7 @@ class OrderController extends Controller
                     $price = json_decode($product->variations)[$i]->price;
                 }
             }
-            $data['variation'] = json_encode([["type"=>$str,"price"=>$price]]);
+            $data['variation'] = json_encode([["type" => $str, "price" => $price]]);
         } else {
             $price = $product->price;
         }
@@ -395,36 +421,31 @@ class OrderController extends Controller
         $data['quantity'] = $request['quantity'];
         $data['price'] = $price;
         $data['status'] = true;
-        $data['discount_on_product'] = Helpers::product_discount_calculate($product, $price,$product->restaurant);
+        $data['discount_on_product'] = Helpers::product_discount_calculate($product, $price, $product->restaurant);
         $data["discount_type"] = "discount_on_product";
         $data["tax_amount"] = Helpers::tax_calculate($product, $price);
         $add_on_ids = [];
         $add_on_qtys = [];
 
-        if($request['addon_id'])
-        {
-            foreach($request['addon_id'] as $id)
-            {
-                $addon_price+= $request['addon-price'.$id]*$request['addon-quantity'.$id];
-                $add_on_qtys[]=$request['addon-quantity'.$id];
+        if ($request['addon_id']) {
+            foreach ($request['addon_id'] as $id) {
+                $addon_price += $request['addon-price' . $id] * $request['addon-quantity' . $id];
+                $add_on_qtys[] = $request['addon-quantity' . $id];
             }
             $add_on_ids = $request['addon_id'];
         }
 
-        $addon_data = Helpers::calculate_addon_price(\App\Model\AddOn::whereIn('id',$add_on_ids)->get(), $add_on_qtys);
+        $addon_data = Helpers::calculate_addon_price(\App\Model\AddOn::whereIn('id', $add_on_ids)->get(), $add_on_qtys);
         $data['add_on_ids'] = json_encode($addon_data['addons']);
-        $data['total_add_on_price'] = $addon_data['total_add_on_price'];
+        //$data['total_add_on_price'] = $addon_data['total_add_on_price'];
         // dd($data);
         $cart = $request->session()->get('order_cart', collect([]));
-        if(isset($request->cart_item_key))
-        {
+        if (isset($request->cart_item_key)) {
             $cart[$request->cart_item_key] = $data;
             return response()->json([
                 'data' => 2
             ]);
-        }
-        else
-        {
+        } else {
             $cart->push($data);
         }
 
@@ -433,20 +454,26 @@ class OrderController extends Controller
         ]);
     }
 
+    public function remove_from_cart(Request $request)
+    {
+        $cart = $request->session()->get('order_cart', collect([]));
+        $cart[$request->key]->status=false;
+        $request->session()->put('order_cart', $cart);
 
+        return response()->json([],200);
+    }
     public function update(Request $request, Order $order)
     {
-        $order = Order::with(['details', 'customer'=>function($query){
+        $order = Order::with(['details', 'customer' => function ($query) {
             return $query->withCount('orders');
-        },'delivery_man'=>function($query){
+        }, 'delivery_man' => function ($query) {
             return $query->withCount('orders');
-        }, 'details.product'=>function($query){
+        }, 'details.product' => function ($query) {
             return $query->withoutGlobalScope(RestaurantScope::class);
         }],)->where(['id' => $order->id])->Notpos()->first();
 
 
-        if(!$request->session()->has('order_cart'))
-        {
+        if (!$request->session()->has('order_cart')) {
             Toastr::error(trans('messages.order_data_not_found'));
             return back();
         }
@@ -456,13 +483,11 @@ class OrderController extends Controller
         $total_addon_price = 0;
         $product_price = 0;
         $restaurant_discount_amount = 0;
-        if($order->coupon_code)
-        {
+        if ($order->coupon_code) {
             $coupon = Coupon::where(['code' => $request['coupon_code']])->first();
         }
         foreach ($cart as $c) {
-            if($c['status'] == true)
-            {
+            if ($c['status'] == true) {
                 unset($c['status']);
                 /* if ($c['item_campaign_id'] != null)
                 {
@@ -511,21 +536,20 @@ class OrderController extends Controller
 
                 } */
                 $product = Product::find($c['product_id']);
-                    if ($product) {
+                if ($product) {
 
-                        $price = $c['price'];
+                    $price = $c['price'];
 
-                        $product = Helpers::product_data_formatting($product);
+                    $product = Helpers::product_data_formatting($product);
 
-                        $c->product_details = json_encode($product);
-                        $c->updated_at = now();
-                        if(isset($c->id))
-                        {
-                            if($c->add_on_ids === "0") {
-                                $c->add_on_ids = json_encode([]);
-                            }
-                            OrderDetail::where('id', $c->id)->update(
-                                [
+                    $c->product_details = json_encode($product);
+                    $c->updated_at = now();
+                    if (isset($c->id)) {
+                        if ($c->add_on_ids === "0") {
+                            $c->add_on_ids = json_encode([]);
+                        }
+                        OrderDetail::where('id', $c->id)->update(
+                            [
                                 'product_id' => $c->product_id,
                                 'product_details' => $c->product_details,
                                 'quantity' => $c->quantity,
@@ -535,26 +559,22 @@ class OrderController extends Controller
                                 'discount_type' => $c->discount_type,
                                 'variant' => $c->variant,
                                 'variation' => $c->variation,
-                                'add_on_ids' => $c->add_on_ids ,
+                                'add_on_ids' => $c->add_on_ids,
                                 'updated_at' => $c->updated_at
                             ]
-                            );
-                        }
-                        else
-                        {
-                            $c->save();
-                        }
-
-                        $total_addon_price += $c['total_add_on_price'];
-                        $product_price += $price*$c['quantity'];
-                        $restaurant_discount_amount += $c['discount_on_product']*$c['quantity'];
+                        );
                     } else {
-                        Toastr::error(trans('messages.product_not_found'));
-                        return back();
+                        $c->save();
                     }
-            }
-            else
-            {
+
+                    $total_addon_price += $c['total_add_on_price'];
+                    $product_price += $price * $c['quantity'];
+                    $restaurant_discount_amount += $c['discount_on_product'] * $c['quantity'];
+                } else {
+                    Toastr::error(trans('messages.product_not_found'));
+                    return back();
+                }
+            } else {
                 $c->delete();
             }
         }
@@ -575,16 +595,14 @@ class OrderController extends Controller
             }
         } */
         //$order->delivery_charge = $order->original_delivery_charge;
-        if($coupon)
-        {
-            if($coupon->coupon_type == 'free_delivery')
-            {
+        if ($coupon) {
+            if ($coupon->coupon_type == 'free_delivery') {
                 $order->delivery_charge = 0;
                 $coupon = null;
             }
         }
 
-      /*   if($order->restaurant->free_delivery)
+        /*   if($order->restaurant->free_delivery)
         {
             $order->delivery_charge = 0;
         } */
@@ -595,7 +613,7 @@ class OrderController extends Controller
 
         //$tax = $restaurant->tax;
         $tax = 0;
-        $total_tax_amount= ($tax > 0)?(($total_price * $tax)/100):0;
+        $total_tax_amount = ($tax > 0) ? (($total_price * $tax) / 100) : 0;
         /* if($restaurant->minimum_order > $product_price + $total_addon_price )
         {
             Toastr::error(trans('messages.you_need_to_order_at_least', ['amount'=>$restaurant->minimum_order.' '.Helpers::currency_code()]));
@@ -606,10 +624,8 @@ class OrderController extends Controller
 
             $free_delivery_over = $free_delivery_over->value;
         }
-        if(isset($free_delivery_over))
-        {
-            if($free_delivery_over <= $product_price + $total_addon_price - $coupon_discount_amount - $restaurant_discount_amount)
-            {
+        if (isset($free_delivery_over)) {
+            if ($free_delivery_over <= $product_price + $total_addon_price - $coupon_discount_amount - $restaurant_discount_amount) {
                 $order->delivery_charge = 0;
             }
         }
@@ -618,7 +634,7 @@ class OrderController extends Controller
 
         $order->coupon_discount_amount = $coupon_discount_amount;
         //$order->restaurant_discount_amount= $restaurant_discount_amount;
-        $order->total_tax_amount= $total_tax_amount;
+        $order->total_tax_amount = $total_tax_amount;
         $order->order_amount = $total_order_ammount;
         //$order->adjusment = $adjustment;
         //$order->edited = true;

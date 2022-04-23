@@ -1,4 +1,3 @@
-use App\Model\BusinessSetting;
 @extends('layouts.admin.app')
 
 @section('title','Order Details')
@@ -24,6 +23,7 @@ use App\Model\BusinessSetting;
         <div class="page-header d-print-none">
             <div class="row align-items-center">
                 <div class="col-sm mb-2 mb-sm-0">
+                    {{-- Page BreadCrumb --}}
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb breadcrumb-no-gutter">
                             <li class="breadcrumb-item">
@@ -35,10 +35,14 @@ use App\Model\BusinessSetting;
                             <li class="breadcrumb-item active" aria-current="page">{{__('messages.order')}} {{__('messages.details')}}</li>
                         </ol>
                     </nav>
+                    {{-- End Page Bread Crumb --}}
 
                     <div class="d-sm-flex align-items-sm-center">
+                        {{-- Order serial --}}
                         <h1 class="page-header-title">{{__('messages.order')}} #{{$order['id']}}</h1>
+                        {{-- End Order Serial  --}}
 
+                        {{-- Order Payment status --}}
                         @if($order['payment_status']=='paid')
                             <span class="badge badge-soft-success ml-sm-3">
                                 <span class="legend-indicator bg-success"></span>{{__('messages.paid')}}
@@ -48,7 +52,9 @@ use App\Model\BusinessSetting;
                                 <span class="legend-indicator bg-danger"></span>{{__('messages.unpaid')}}
                             </span>
                         @endif
+                        {{-- End Order Payment status --}}
 
+                        {{-- Order Status --}}
                         @if($order['order_status']=='pending')
                             <span class="badge badge-soft-info ml-2 ml-sm-3 text-capitalize">
                               <span class="legend-indicator bg-info text"></span>{{__('messages.pending')}}
@@ -78,12 +84,14 @@ use App\Model\BusinessSetting;
                               <span class="legend-indicator bg-danger"></span>{{str_replace('_',' ',$order['order_status'])}}
                             </span>
                         @endif
+                        {{-- End Order Status --}}
+
                         @if($campaign_order)
                             <span class="badge badge-soft-success ml-sm-3">
                                 <span class="legend-indicator bg-success"></span>{{__('messages.campaign_order')}}
                             </span>
                         @endif
-                        @if($order->edited)
+                        @if(date($order->updated_at) > date($order->created_at))
                             <span class="badge badge-soft-dark ml-sm-3">
                                 <span class="legend-indicator bg-dark"></span>{{__('messages.edited')}}
                             </span>
@@ -254,17 +262,17 @@ use App\Model\BusinessSetting;
                                     </div>
                                     <!-- End Search -->
                                 </form>
-                                {{-- <div class="input-group header-item">
+                                <div class="input-group header-item">
                                     <select name="category" id="category" class="form-control js-select2-custom mx-1" title="{{__('messages.select')}} {{__('messages.category')}}" onchange="set_category_filter(this.value)">
-                                        <option value="">{{__('messages.all')}} {{__("messages.categories")}}</option>
+                                        <option value="">{{__("messages.category")}}</option>
                                         @foreach ($categories as $item)
                                         <option value="{{$item->id}}" {{$category==$item->id?'selected':''}}>{{$item->name}}</option>
                                         @endforeach
                                     </select>
-                                </div> --}}
+                                </div>
 
                             </div>
-                           {{--  <div class="col-12" id="items">
+                            <div class="col-12" id="items">
                                 <div class="d-flex flex-wrap mt-2 mb-3" style="justify-content: space-around;">
                                     @foreach($products as $product)
                                         <div class="item-box">
@@ -272,10 +280,10 @@ use App\Model\BusinessSetting;
                                         </div>
                                     @endforeach
                                 </div>
-                            </div> --}}
-                           {{--  <div class="col-12">
+                            </div>
+                            <div class="col-12 small" style="overflow: auto">
                                 {!!$products->withQueryString()->links()!!}
-                            </div> --}}
+                            </div>
                         </div>
                         @endif
                     </div>
@@ -305,7 +313,10 @@ use App\Model\BusinessSetting;
                         $details = $order->details;
                         if($editing)
                         {
-                            $details = session('order_cart');
+                            $details = collect(session('order_cart'))->reject(function($item) {
+                                return $item->status === false;
+                            });
+
                         }
                         else
                         {
@@ -987,7 +998,7 @@ use App\Model\BusinessSetting;
     <!-- End Modal -->
 
     <div class="modal fade" id="quick-view" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content" id="quick-view-modal">
 
             </div>
@@ -1004,6 +1015,19 @@ use App\Model\BusinessSetting;
             var nurl = new URL('{!!url()->full()!!}');
             nurl.searchParams.set('keyword', keyword);
             location.href = nurl;
+        });
+
+        $('#datatableSearch').on('search', function (e) {
+            e.preventDefault();
+            var keyword= $('#datatableSearch').val();
+            if (keyword === '' || keyword === null) {
+
+                var nurl = new URL('{!!url()->full()!!}');
+                nurl.searchParams.set('keyword', keyword);
+                //console.log(nurl);
+                location.href = nurl;
+            }
+
         });
 
         function set_category_filter(id) {
