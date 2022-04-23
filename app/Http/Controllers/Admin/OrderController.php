@@ -517,13 +517,11 @@ class OrderController extends Controller
 
                         $product = Helpers::product_data_formatting($product);
 
-                        $c->food_details = json_encode($product);
+                        $c->product_details = json_encode($product);
                         $c->updated_at = now();
                         if(isset($c->id))
                         {
-                            try {
-                                json_decode($c->add_on_ids);
-                            } catch (Exception $e) {
+                            if($c->add_on_ids === "0") {
                                 $c->add_on_ids = json_encode([]);
                             }
                             OrderDetail::where('id', $c->id)->update(
