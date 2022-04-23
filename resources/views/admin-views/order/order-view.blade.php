@@ -18,7 +18,7 @@ use App\Model\BusinessSetting;
 @endpush
 
 @section('content')
-    <?php $campaign_order=isset($order->details[0]->campaign)?true:false;?>
+
     <div class="content container-fluid">
         <!-- Page Header -->
         <div class="page-header d-print-none">
@@ -118,7 +118,7 @@ use App\Model\BusinessSetting;
                             <h5>
                                 <button class="btn btn-xs btn-secondary"  data-toggle="modal" data-target="#locationModal" ><i class="tio-map"></i> {{__('messages.show_locations_on_map')}}</button>
                                 @if($order->payment_method != 'cash_on_delivery' && $order->payment_status == 'paid' && $order->order_status != 'refunded')
-                                <button class="btn btn-xs btn-danger"  onclick="route_alert('{{route('admin.order.status',['id'=>$order['id'],'order_status'=>'refunded'])}}','{{__('messages.you_want_to_refund_this_order', ['amount'=> $refund_amount.' '.\App\CentralLogics\Helpers::currency_code()])}}', '{{__('messages.are_you_sure_want_to_refund')}}')" ><i class="tio-money"></i> {{__('messages.refund_this_order')}}</button>
+                                <button class="btn btn-xs btn-danger"  onclick="route_alert('{{route('admin.orders.status',['id'=>$order['id'],'order_status'=>'refunded'])}}','{{__('messages.you_want_to_refund_this_order', ['amount'=> $refund_amount.' '.\App\CentralLogics\Helpers::currency_code()])}}', '{{__('messages.are_you_sure_want_to_refund')}}')" ><i class="tio-money"></i> {{__('messages.refund_this_order')}}</button>
                                 @endif
                             </h5>
                         </div>
@@ -130,7 +130,7 @@ use App\Model\BusinessSetting;
                                         aria-expanded="false">
                                     {{__('messages.status')}}
                                 </button>
-                                 
+
                                 <div class="dropdown-menu text-capitalize" aria-labelledby="dropdownMenuButton">
                                     <a class="dropdown-item {{$order['order_status']=='pending'?'active':''}}"
                                        onclick="route_alert('{{route('admin.orders.status',['id'=>$order['id'],'order_status'=>'pending'])}}','Change status to pending ?')"
@@ -250,33 +250,32 @@ use App\Model\BusinessSetting;
                                                 <i class="tio-search"></i>
                                             </div>
                                         </div>
-                                        <input id="datatableSearch" type="search" value="{{$keyword?$keyword:''}}" name="search" class="form-control" placeholder="Search here" aria-label="Search here">
+                                        <input id="datatableSearch" type="search" value="{{isset($keyword)?$keyword:''}}" name="search" class="form-control" placeholder="Search here" aria-label="Search here">
                                     </div>
                                     <!-- End Search -->
                                 </form>
-                                <div class="input-group header-item">
+                                {{-- <div class="input-group header-item">
                                     <select name="category" id="category" class="form-control js-select2-custom mx-1" title="{{__('messages.select')}} {{__('messages.category')}}" onchange="set_category_filter(this.value)">
                                         <option value="">{{__('messages.all')}} {{__("messages.categories")}}</option>
                                         @foreach ($categories as $item)
                                         <option value="{{$item->id}}" {{$category==$item->id?'selected':''}}>{{$item->name}}</option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> --}}
 
                             </div>
-                            <div class="col-12" id="items">
+                           {{--  <div class="col-12" id="items">
                                 <div class="d-flex flex-wrap mt-2 mb-3" style="justify-content: space-around;">
                                     @foreach($products as $product)
                                         <div class="item-box">
                                             @include('admin-views.order.partials._single_product',['product'=>$product, 'restaurant_data'=>$order->restaurant])
-                                            {{--<hr class="d-sm-none">--}}
                                         </div>
                                     @endforeach
                                 </div>
-                            </div>
-                            <div class="col-12">
+                            </div> --}}
+                           {{--  <div class="col-12">
                                 {!!$products->withQueryString()->links()!!}
-                            </div>
+                            </div> --}}
                         </div>
                         @endif
                     </div>
@@ -317,36 +316,36 @@ use App\Model\BusinessSetting;
                         }
                     ?>
                     @foreach($details as $key=>$detail)
-                        @if(isset($detail->food_id) && $detail->status)
+                        @if(isset($detail->product_id) )
                         <?php
                             if(!$editing)
                             {
-                                $detail->food = json_decode($detail->food_details, true);
+                                $detail->product = json_decode($detail->product_details, true);
                             }
                         ?>
-                            
+
                             <!-- Media -->
                                 <div class="media">
                                 @if($editing)
                                     <div class="avatar avatar-xl mr-3 cursor-pointer" onclick="quick_view_cart_item({{$key}})" title="{{__('messages.click_to_edit_this_item')}}">
                                         <span class="avatar-status avatar-lg-status avatar-status-dark"><i class="tio-edit"></i></span>
                                         <img class="img-fluid"
-                                             src="{{asset('storage/app/public/product')}}/{{$detail->food['image']}}"
+                                             src="{{asset('storage/app/public/product')}}/{{$detail->product['image']}}"
                                              onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
                                              alt="Image Description">
                                     </div>
                                 @else
-                                    <a class="avatar avatar-xl mr-3" href="{{route('admin.food.view', $detail->food['id'])}}">
+                                    <a class="avatar avatar-xl mr-3" href="{{route('admin.product.view', $detail->product['id'])}}">
                                         <img class="img-fluid"
-                                             src="{{asset('storage/app/public/product')}}/{{$detail->food['image']}}"
+                                             src="{{asset('storage/app/public/product')}}/{{$detail->product['image']}}"
                                              onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
                                              alt="Image Description">
                                     </a>
                                 @endif
                                     <div class="media-body">
                                         <div class="row">
-                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                <strong> {{Str::limit($detail->food['name'], 20, '...')}}</strong><br>
+                                            <div class="col-md-5 mb-3 mb-md-0">
+                                                <strong> {{Str::limit($detail->product['name'], 20, '...')}}</strong><br>
 
                                                 @if(count(json_decode($detail['variation'],true))>0)
                                                     <strong><u>{{__('messages.variation')}} : </u></strong>
@@ -357,8 +356,7 @@ use App\Model\BusinessSetting;
                                                         </div>
                                                     @endforeach
                                                 @endif
-
-                                                @foreach(json_decode($detail['add_ons'],true) as $key2 =>$addon)
+                                                @foreach(json_decode($detail['add_on_ids'],true) as $key2 =>$addon)
                                                     @if($key2==0)<strong><u>{{__('messages.addons')}} : </u></strong>@endif
                                                     <div class="font-size-sm text-body">
                                                         <span>{{Str::limit($addon['name'],20,'...')}} :  </span>
@@ -373,7 +371,7 @@ use App\Model\BusinessSetting;
                                             <div class="col col-md-2 align-self-center">
                                                 <h6>{{\App\CentralLogics\Helpers::format_currency($detail['price'])}}</h6>
                                             </div>
-                                            <div class="col col-md-1 align-self-center">
+                                            <div class="col col-md-2 align-self-center">
                                                 <h5>{{$detail['quantity']}}</h5>
                                             </div>
 
@@ -388,7 +386,7 @@ use App\Model\BusinessSetting;
                                 @php($restaurant_discount_amount += ($detail['discount_on_food']*$detail['quantity']))
                             <!-- End Media -->
                                 <hr>
-                        
+
                         @elseif(isset($detail->item_campaign_id)  && $detail->status)
                         <?php
                             if(!$editing)
@@ -400,7 +398,7 @@ use App\Model\BusinessSetting;
                                 <div class="media">
                                     @if ($editing)
                                     <div class="avatar avatar-xl mr-3  cursor-pointer" onclick="quick_view_cart_item({{$key}})" title="{{__('messages.click_to_edit_this_item')}}">
-                                        <span class="avatar-status avatar-lg-status avatar-status-dark"><i class="tio-edit"></i></span>    
+                                        <span class="avatar-status avatar-lg-status avatar-status-dark"><i class="tio-edit"></i></span>
                                         <img class="img-fluid"
                                              src="{{asset('storage/app/public/campaign')}}/{{$detail->campaign['image']}}"
                                              onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
@@ -431,7 +429,7 @@ use App\Model\BusinessSetting;
                                                     @endforeach
                                                 @endif
 
-                                                @foreach(json_decode($detail['add_ons'],true) as $key2 =>$addon)
+                                                @foreach(json_decode($detail['add_on_ids'],true) as $key2 =>$addon)
                                                     @if($key2==0)<strong><u>{{__('messages.addons')}} : </u></strong>@endif
                                                     <div class="font-size-sm text-body">
                                                         <span>{{Str::limit($addon['name'],20, '...')}} :  </span>
@@ -464,45 +462,48 @@ use App\Model\BusinessSetting;
                         @endif
                     @endforeach
 
-                    <?php 
+                    <?php
                         $coupon_discount_amount = $order['coupon_discount_amount'];
 
                         $total_price = $product_price + $total_addon_price - $restaurant_discount_amount - $coupon_discount_amount;
-                    
+
                         $total_tax_amount= $order['total_tax_amount'];
 
                         if($editing)
                         {
-                            $restaurant_discount = \App\CentralLogics\Helpers::get_restaurant_discount($order->restaurant);
+                            /* $restaurant_discount = \App\CentralLogics\Helpers::get_restaurant_discount($order->restaurant);
                             if(isset($restaurant_discount))
                             {
                                 if($product_price + $total_addon_price < $restaurant_discount['min_purchase'])
                                 {
                                     $restaurant_discount_amount = 0;
                                 }
-                    
+
                                 if($restaurant_discount_amount > $restaurant_discount['max_discount'])
                                 {
                                     $restaurant_discount_amount = $restaurant_discount['max_discount'];
                                 }
-                            }
-                            $coupon_discount_amount = $coupon ? \App\CentralLogics\CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $restaurant_discount_amount) : $order['coupon_discount_amount']; 
-                            $tax = $order->restaurant->tax;
-
+                            } */
+                            $coupon_discount_amount = $coupon ? \App\CentralLogics\CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $restaurant_discount_amount) : $order['coupon_discount_amount'];
+                            //$tax = $order->restaurant->tax;
+                            $tax = 0;
                             $total_price = $product_price + $total_addon_price - $restaurant_discount_amount - $coupon_discount_amount;
-                    
-                            $total_tax_amount = ($tax > 0)?(($total_price * $tax)/100):0;  
-                            
+
+                            $total_tax_amount = ($tax > 0)?(($total_price * $tax)/100):0;
+
                             $total_tax_amount = round($total_tax_amount, 2);
 
                             $restaurant_discount_amount = round($restaurant_discount_amount, 2);
 
-                            if($order->restaurant->free_delivery)
+                            /* if($order->restaurant->free_delivery)
                             {
                                 $del_c = 0;
-                            }
+                            } */
 
-                            $free_delivery_over = \App\Models\BusinessSetting::where('key', 'free_delivery_over')->first()->value;
+                            $free_delivery_over = \App\Model\BusinessSetting::where('key', 'free_delivery_over')->first();
+                            if ($free_delivery_over) {
+                                $free_delivery_over = $free_delivery_over->value;
+                            }
                             if(isset($free_delivery_over))
                             {
                                 if($free_delivery_over <= $product_price + $total_addon_price - $coupon_discount_amount - $restaurant_discount_amount)
@@ -555,7 +556,7 @@ use App\Model\BusinessSetting;
                             </div>
                             @if($editing)
                             <div class="offset-sm-8 col-sm-4 d-flex justify-content-between">
-                                <button class="btn btn-sm btn-danger" type="button" onclick="cancle_editing_order()">{{__('messages.cancel')}}</button>
+                                <button class="btn btn-sm btn-danger" type="button" onclick="cancle_editing_order()">{{__('messages.Cancel')}}</button>
                                 <button class="btn btn-sm btn-primary" type="button" onclick="update_order()">{{__('messages.submit')}}</button>
                             </div>
                             @endif
@@ -568,27 +569,27 @@ use App\Model\BusinessSetting;
             </div>
 
             <div class="col-lg-4">
-                @if($order['order_type']!='take_away' && !$order->restaurant->self_delivery_system)
+                @if($order['order_type']!='take_away')
                 <!-- Card -->
                 <div class="card mb-2">
                     <!-- Header -->
                     <div class="card-header">
                         <h4 class="card-header-title">{{__('messages.deliveryman')}}</h4>
-                        @if($order->delivery_man && !isset($order->delivered) && !$order->restaurant->self_delivery_system)  
+                        @if($order->delivery_man && !isset($order->delivered) )
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">
-                            {{__('messages.change')}}
+                            {{__('messages.changes')}}
                         </button>
                         @endif
                     </div>
                     <!-- End Header -->
 
                     <!-- Body -->
-                    
+
                     <div class="card-body">
-                    @if($order->delivery_man)    
-                        <a class="media align-items-center  deco-none" href="{{route('admin.delivery-man.preview',[$order->delivery_man['id']])}}">                            
+                    @if($order->delivery_man)
+                        <a class="media align-items-center  deco-none" href="{{route('admin.delivery-man.preview',[$order->delivery_man['id']])}}">
                             <div class="avatar avatar-circle mr-3">
-    
+
                                     <img class="avatar-img" style="width: 75px"
                                     onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
                                     src="{{asset('storage/app/public/delivery-man/'.$order->delivery_man->image)}}"
@@ -614,7 +615,7 @@ use App\Model\BusinessSetting;
                             <li>
                                 <a class="deco-none" href="tel:{{$order->delivery_man['phone']}}">
                                     <i class="tio-android-phone-vs mr-2"></i>
-                                {{$order->delivery_man['phone']}}</a> 
+                                {{$order->delivery_man['phone']}}</a>
                             </li>
                         </ul>
 
@@ -635,7 +636,7 @@ use App\Model\BusinessSetting;
                             {{__('messages.location').' '.__('messages.not_found')}}
                         </span>
                         @endif
-           
+
                     @else
                         <div class="w-100 text-center">
                             <div class="hs-unfold">
@@ -644,9 +645,9 @@ use App\Model\BusinessSetting;
                                 </button>
                             </div>
                         </div>
-                    @endif    
+                    @endif
                     </div>
-                    
+
                 <!-- End Body -->
                 </div>
                 <!-- End Card -->
@@ -662,10 +663,10 @@ use App\Model\BusinessSetting;
                     <!-- Body -->
                     @if($order->customer)
                         <div class="card-body">
-     
-                            <a class="media align-items-center deco-none" href="{{route('admin.customer.view',[$order->customer['id']])}}">    
+
+                            <a class="media align-items-center deco-none" href="{{route('admin.customer.view',[$order->customer['id']])}}">
                                 <div class="avatar avatar-circle mr-3">
-                                    
+
                                     <img class="avatar-img" style="width: 75px"
                                     onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
                                     src="{{asset('storage/app/public/profile/'.$order->customer->image)}}"
@@ -676,7 +677,7 @@ use App\Model\BusinessSetting;
                                     <span class="text-body text-hover-primary">{{$order->customer['f_name'].' '.$order->customer['l_name']}}</span><br>
                                     <span class="badge badge-ligh">{{$order->customer->orders_count}} {{__('messages.orders')}}</span>
                                 </div>
-            
+
                             </a>
 
                             <hr>
@@ -803,7 +804,7 @@ use App\Model\BusinessSetting;
                     </button>
                 </div>
 
-                <form action="{{route('admin.order.add-payment-ref-code',[$order['id']])}}" method="post">
+                <form action="{{route('admin.orders.add-payment-ref-code',[$order['id']])}}" method="post">
                     @csrf
                     <div class="modal-body">
                         <!-- Input Group -->
@@ -854,7 +855,7 @@ use App\Model\BusinessSetting;
                 </div>
 
                 @if(isset($address))
-                    <form action="{{route('admin.order.update-shipping',[$order['id']])}}"
+                    <form action="{{route('admin.orders.update-shipping',[$order['id']])}}"
                           method="post">
                         @csrf
                         <div class="modal-body">
@@ -937,13 +938,16 @@ use App\Model\BusinessSetting;
                         <div class="col-md-5 my-2">
                             <ul class="list-group overflow-auto" style="max-height:400px;">
                                 @foreach ($deliveryMen as $dm)
-                                    <li class="list-group-item"> 
+                                    <li class="list-group-item">
                                         <span class="dm_list" role='button' data-id="{{$dm['id']}}">
                                             <img class="avatar avatar-sm avatar-circle mr-1" onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'" src="{{asset('storage/app/public/delivery-man')}}/{{$dm['image']}}" alt="{{$dm['name']}}">
                                             {{$dm['name']}}
-                                        </span>    
-
+                                        </span>
+                                        @if($order->delivery_man && $dm->id === $order->delivery_man->id)
+                                        <a href="#" class="btn btn-dark btn-xs float-right disabled">{{ __('messages.current') }}</a>
+                                        @else
                                         <a class="btn btn-primary btn-xs float-right" onclick="addDeliveryMan({{$dm['id']}})">{{__('messages.assign')}}</a>
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>
@@ -981,7 +985,7 @@ use App\Model\BusinessSetting;
         </div>
     </div>
     <!-- End Modal -->
-    
+
     <div class="modal fade" id="quick-view" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content" id="quick-view-modal">
@@ -992,7 +996,7 @@ use App\Model\BusinessSetting;
 @endsection
 
 @push('script_2')
-    
+
     <script>
         $('#search-form').on('submit', function (e) {
             e.preventDefault();
@@ -1001,7 +1005,7 @@ use App\Model\BusinessSetting;
             nurl.searchParams.set('keyword', keyword);
             location.href = nurl;
         });
-        
+
         function set_category_filter(id) {
             var nurl = new URL('{!!url()->full()!!}');
             nurl.searchParams.set('category_id', id);
@@ -1023,7 +1027,7 @@ use App\Model\BusinessSetting;
 
         function quick_view_cart_item(key) {
             $.get({
-                url: '{{route('admin.order.quick-view-cart-item')}}',
+                url: '{{route('admin.orders.quick-view-cart-item')}}',
                 dataType: 'json',
                 data: {
                     key: key,
@@ -1044,7 +1048,7 @@ use App\Model\BusinessSetting;
 
         function quickView(product_id) {
             $.get({
-                url: '{{route('admin.order.quick-view')}}',
+                url: '{{route('admin.orders.quick-view')}}',
                 dataType: 'json',
                 data: {
                     product_id: product_id,
@@ -1147,24 +1151,28 @@ use App\Model\BusinessSetting;
             });
         }
 
-        function getVariantPrice() {
-            if ($('#add-to-cart-form input[name=quantity]').val() > 0) {
-                $.ajaxSetup({
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
-                    }
-                });
-                $.ajax({
-                    type: "POST",
-                    url: '{{ route('admin.food.variant-price') }}',
-                    data: $('#add-to-cart-form').serializeArray(),
-                    success: function (data) {
-                        $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
-                        $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
-                    }
-                });
+        // remove function getVariantPrice
+        {{--
+
+            function getVariantPrice() {
+                if ($('#add-to-cart-form input[name=quantity]').val() > 0) {
+                    $.ajaxSetup({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
+                        }
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: '{{ route('admin.food.variant-price') }}',
+                        data: $('#add-to-cart-form').serializeArray(),
+                        success: function (data) {
+                            $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
+                            $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
+                        }
+                    });
+                }
             }
-        }
+        --}}
 
         function update_order_item(form_id = 'add-to-cart-form') {
             $.ajaxSetup({
@@ -1173,7 +1181,7 @@ use App\Model\BusinessSetting;
                 }
             });
             $.post({
-                url: '{{ route('admin.order.add-to-cart') }}',
+                url: '{{ route('admin.orders.add-to-cart') }}',
                 data: $('#' + form_id).serializeArray(),
                 beforeSend: function () {
                     $('#loading').show();
@@ -1186,7 +1194,7 @@ use App\Model\BusinessSetting;
                             text: "{{__('messages.product_already_added_in_cart')}}"
                         });
                         return false;
-                    } 
+                    }
                     else if (data.data == 0) {
                         toastr.success('{{__('messages.product_has_been_added_in_cart')}}', {
                             CloseButton: true,
@@ -1222,7 +1230,7 @@ use App\Model\BusinessSetting;
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    $.post('{{ route('admin.order.remove-from-cart') }}', {_token: '{{ csrf_token() }}', key: key, order_id: '{{$order->id}}'}, function (data) {
+                    $.post('{{ route('admin.orders.remove-from-cart') }}', {_token: '{{ csrf_token() }}', key: key, order_id: '{{$order->id}}'}, function (data) {
                         if (data.errors) {
                             for (var i = 0; i < data.errors.length; i++) {
                                 toastr.error(data.errors[i].message, {
@@ -1258,7 +1266,7 @@ use App\Model\BusinessSetting;
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    location.href = '{{route('admin.order.edit', $order->id)}}';
+                    location.href = '{{route('admin.orders.edit', $order->id)}}';
                 }
             })
         }
@@ -1277,7 +1285,7 @@ use App\Model\BusinessSetting;
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    location.href = '{{route('admin.order.edit', $order->id)}}?cancle=true';
+                    location.href = '{{route('admin.orders.edit', $order->id)}}?cancle=true';
                 }
             })
         }
@@ -1296,25 +1304,33 @@ use App\Model\BusinessSetting;
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    location.href = '{{route('admin.order.update', $order->id)}}';
+                    location.href = '{{route('admin.orders.update', $order->id)}}';
                 }
             })
         }
     </script>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key={{\App\Models\BusinessSetting::where('key', 'map_api_key')->first()->value}}&v=3.45.8"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{\App\Model\BusinessSetting::where('key', 'map_api_key')->first()->value}}&v=3.45.8"></script>
     <script>
         function addDeliveryMan(id) {
             $.ajax({
                 type: "GET",
-                url: '{{url('/')}}/admin/order/add-delivery-man/{{$order['id']}}/' + id,
+                url: '{{url('/')}}/admin/orders/add-delivery-man/{{$order['id']}}/' + id,
                 success: function (data) {
-                    location.reload();
-                    console.log(data)
-                    toastr.success('Successfully added', {
-                        CloseButton: true,
-                        ProgressBar: true
-                    });
+                    //console.log(data);
+                    if(data.status === false) {
+                        toastr.warning(data.message, {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    } else {
+                        location.reload();
+
+                        toastr.success('Successfully added', {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    }
                 },
                 error: function (response) {
                     console.log(response);
@@ -1333,7 +1349,8 @@ use App\Model\BusinessSetting;
             });
         }
     </script>
-    <script>
+    {{--
+         <script>
         var deliveryMan = <?php echo(json_encode($deliveryMen)); ?>;
         var map = null;
         var myLatlng = new google.maps.LatLng({{$order->restaurant->latitude}}, {{$order->restaurant->longitude}});
@@ -1364,7 +1381,7 @@ use App\Model\BusinessSetting;
             }
         };
         function initializeGMap() {
-            
+
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
             var infowindow = new google.maps.InfoWindow();
@@ -1383,7 +1400,7 @@ use App\Model\BusinessSetting;
                 }
             })(Restaurantmarker));
             map.fitBounds(dmbounds);
-            for (var i = 0; i < deliveryMan.length; i++) {                  
+            for (var i = 0; i < deliveryMan.length; i++) {
                 if(deliveryMan[i].lat)
                 {
                     // var contentString = "<div style='float:left'><img style='max-height:40px;wide:auto;' src='{{asset('storage/app/public/delivery-man')}}/"+deliveryMan[i].image+"'></div><div style='float:right; padding: 10px;'><b>"+deliveryMan[i].name+"</b><br/> "+deliveryMan[i].location+"</div>";
@@ -1423,12 +1440,12 @@ use App\Model\BusinessSetting;
                 map.setCenter(myLatlng);
             });
 
-            
+
             function initializegLocationMap() {
                 map = new google.maps.Map(document.getElementById("location_map_canvas"), myOptions);
 
                 var infowindow = new google.maps.InfoWindow();
-            
+
                 @if($order->customer && isset($address))
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng({{$address['latitude']}}, {{$address['longitude']}}),
@@ -1478,7 +1495,7 @@ use App\Model\BusinessSetting;
                 })(Retaurantmarker));
                 locationbounds.extend(Retaurantmarker.getPosition());
                 @endif
-                
+
                 google.maps.event.addListenerOnce(map, 'idle', function() {
                     map.fitBounds(locationbounds);
                 });
@@ -1502,4 +1519,6 @@ use App\Model\BusinessSetting;
         })
 
     </script>
+    --}}
+
 @endpush

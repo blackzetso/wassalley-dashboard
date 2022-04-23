@@ -39,6 +39,67 @@ class Helpers
         return $result;
     }
 
+    public static function get_restaurant_discount($restaurant)
+    {
+        return 0;
+        /* if($restaurant->discount)
+        {
+            if(date('Y-m-d', strtotime($restaurant->discount->start_date)) <= now()->format('Y-m-d') && date('Y-m-d',strtotime($restaurant->discount->end_date)) >= now()->format('Y-m-d') && date('H:i', strtotime($restaurant->discount->start_time)) <= now()->format('H:i') && date('H:i', strtotime($restaurant->discount->end_time)) >= now()->format('H:i'))
+            {
+                return [
+                    'discount'=>$restaurant->discount->discount,
+                    'min_purchase'=>$restaurant->discount->min_purchase,
+                    'max_discount'=>$restaurant->discount->max_discount
+                ];
+            }
+        }
+        return null; */
+    }
+
+    public static function product_discount_calculate($product, $price, $restaurant)
+    {
+        return 0;
+       /*  $restaurant_discount = self::get_restaurant_discount($restaurant);
+        if(isset($restaurant_discount))
+        {
+            $price_discount = ($price / 100) * $restaurant_discount['discount'];
+        }
+        else if($product['discount_type'] == 'percent') {
+            $price_discount = ($price / 100) * $product['discount'];
+        } else {
+            $price_discount = $product['discount'];
+        }
+        return $price_discount; */
+    }
+
+    public static function get_price_range($product , $discount=false)
+    {
+        $lowest_price = $product->price;
+        $highest_price = $product->price;
+
+        foreach (json_decode($product->variations) as $key => $variation) {
+            if ($lowest_price > $variation->price) {
+                $lowest_price = round($variation->price, 2);
+            }
+            if ($highest_price < $variation->price) {
+                $highest_price = round($variation->price, 2);
+            }
+        }
+        if($discount)
+        {
+            $lowest_price -= self::product_discount_calculate($product, $lowest_price, $product->restaurant);
+            $highest_price -= self::product_discount_calculate($product, $highest_price, $product->restaurant);
+        }
+        $lowest_price = self::format_currency($lowest_price);
+        $highest_price = self::format_currency($highest_price);
+
+        if ($lowest_price == $highest_price) {
+            return $lowest_price;
+        }
+        return $lowest_price . ' - ' . $highest_price;
+    }
+
+
     public static function variation_price($product, $variation)
     {
         if (empty(json_decode($variation, true))) {
@@ -728,3 +789,4 @@ function translate($key)
     }
     return $result;
 }
+

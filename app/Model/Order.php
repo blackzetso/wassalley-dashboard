@@ -48,6 +48,10 @@ class Order extends Model
     {
         return $query->where('order_type', '=' , 'pos');
     }
-  
-  
+
+    public function scopeNotPos($query)
+    {
+        return $query->where('order_type', '!=' , 'pos');
+    }
+
 }
