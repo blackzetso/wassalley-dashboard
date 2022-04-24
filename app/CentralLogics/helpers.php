@@ -481,7 +481,7 @@ class Helpers
     {
         $currency_symbol_position = BusinessSetting::where(['key' => 'currency_symbol_position'])->first()->value;
 
-        return $currency_symbol_position=='right'?round($value,config('round_up_to_digit')).' '.self::currency_symbol():self::currency_symbol().' '.round($value, config('round_up_to_digit'));
+        return $currency_symbol_position=='right'?round($value,config('round_up_to_digit', 2)).' '.self::currency_symbol():self::currency_symbol().' '.round($value, config('round_up_to_digit', 2));
     }
 
     public static  function remove_dir($dir) {

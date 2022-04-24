@@ -107,8 +107,8 @@ Route::group(['prefix'=>'bkash'], function () {
     Route::post('success', 'BkashPaymentController@bkashSuccess')->name('bkash-success');
 
     // Refund Routes for bKash
-    Route::get('refund', 'BkashRefundController@index')->name('bkash-refund');
-    Route::post('refund', 'BkashRefundController@refund')->name('bkash-refund');
+    //Route::get('refund', 'BkashRefundController@index')->name('bkash-refund');
+    //Route::post('refund', 'BkashRefundController@refund')->name('bkash-refund');
 });
 
 // paymob
