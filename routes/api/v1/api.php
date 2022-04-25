@@ -84,7 +84,7 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
         Route::get('products/{category_id}/all', 'CategoryController@get_all_products');
     });
 
-    Route::group(['prefix' => 'customer', 'middleware' => 'auth:api'], function () {
+    Route::group(['prefix' => 'customer', 'middleware' => ['auth:api', 'actch']], function () {
         Route::get('info', 'CustomerController@info');
         Route::put('update-profile', 'CustomerController@update_profile');
         Route::put('cm-firebase-token', 'CustomerController@update_cm_firebase_token');

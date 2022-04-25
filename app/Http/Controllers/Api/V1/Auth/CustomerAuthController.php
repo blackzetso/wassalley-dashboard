@@ -149,7 +149,7 @@ class CustomerAuthController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
-      
+
         Log::emergency($request->phone);
         Log::alert($request->phone);
         Log::critical($request->phone);
@@ -158,7 +158,7 @@ class CustomerAuthController extends Controller
         Log::notice($request->phone);
         Log::info($request->phone);
         Log::debug($request->phone);
-			
+
         $temporary_token = Str::random(40);
         $user = User::create([
             'f_name' => $request->f_name,
@@ -197,7 +197,7 @@ class CustomerAuthController extends Controller
                 'password' => 'required|min:6'
             ]);
         }
-      
+
         Log::info($request->email_or_phone.'login');
 
 
@@ -207,13 +207,20 @@ class CustomerAuthController extends Controller
 
         $user = User::where(['email' => $user_id])->orWhere('phone', $user_id)->where('status','0')->first();
         if (isset($user)) {
- 
+
+            if($user->status === 1) {
+                return response()->json([
+                    'code' => 'auth-002',
+                    'message' => 'هذا المستخدم محظور '
+                ]);
+            }
+
             if (Hash::check($request->password, $user->password)) {
                 $token = $user->createToken('RestaurantCustomerAuth')->accessToken;
                 return response()->json(['token' => $token], 200);
             }
 
-        } 
+        }
 
         $errors = [];
         array_push($errors, ['code' => 'auth-001', 'message' => 'فشل تسجيل الدخول الرجاء المحاولة مرة أخرى']);

@@ -18,6 +18,14 @@ class ActivationCheckMiddleware
      */
     public function handle($request, Closure $next)
     {
-		return $next($request);
+        $user = $request->user();
+        if ($user->status === 0) {
+            return $next($request);
+        }
+
+        return response()->json([
+            'code' => 'auth-002',
+            'message' => 'هذا المستخدم محظور '
+        ]);
     }
 }
