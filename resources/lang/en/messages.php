@@ -387,4 +387,7 @@
     'edited' => 'تم تعديله',
     'add_to_cart' => 'إضافة الي السلة',
     'you_want_to_remove_this_order_item' => 'هل تريد حذف هذا المنتج',
+    'you_want_to_remove_order' => 'هل تريد حذف الطلب :id',
+    'unable_to_delete_order' => 'حدث خطأ اثناء حذف الطلب',
+    'order_deleted_successfully' => 'تم حذف الطلب بنجاح',
 );

@@ -201,11 +201,14 @@
                                     <span
                                         class="badge badge-soft-dark rounded-circle ml-1">{{$order->details->count()}}</span>
                                 </h4>
-                                @if (!$editing && in_array($order->order_status, ['pending','confirmed','processing','accepted']))
-                                <button class="btn btn-sm btn-primary" type="button" onclick="edit_order()">
-                                    <i class="tio-edit"></i> {{__('messages.edit')}}
-                                </button>
-                                @endif
+                                <div>
+                                    @if (!$editing && in_array($order->order_status, ['pending','confirmed','processing','accepted']))
+                                    <button class="btn btn-sm btn-primary" type="button" onclick="edit_order()">
+                                        <i class="tio-edit"></i> {{__('messages.edit')}}
+                                    </button>
+                                    @endif
+
+                                </div>
                             </div>
                         </div>
                         <div class="row">

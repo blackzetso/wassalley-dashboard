@@ -189,6 +189,13 @@
                                         <a class="dropdown-item" target="_blank"
                                            href="{{route('admin.orders.generate-invoice',[$order['id']])}}"><i
                                                 class="tio-download"></i> {{\App\CentralLogics\translate('invoice')}}</a>
+                                        <a href="#" class="dropdown-item" data-order-id="{{ $order['id'] }}" data-toggle="order-delete">
+                                            <i class="tio-delete"></i> <span>{{ __('messages.delete') }}</span>
+                                        <form action="{{ route('admin.orders.delete', $order['id']) }}" method="POST" id="delete_form_{{ $order['id'] }}">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                        </a>
                                     </div>
                                 </div>
                             </td>
@@ -253,5 +260,47 @@
                 },
             });
         });
+    </script>
+
+    <script>
+        /**
+         *  Delete selected Order
+         *
+         */
+        var deleteOrderBtns = [].slice.call(document.querySelectorAll('[data-toggle="order-delete"]'));
+        /** loop through all buttons and attach click event */
+        deleteOrderBtns.forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                var orderId = btn.dataset.orderId;
+                var deleteForm = document.querySelector(`#delete_form_${orderId}`);
+                console.log(orderId);
+                e.preventDefault();
+                Swal.fire({
+                    title: `{{ __('messages.are_you_sure') }}`,
+                    html: `{{ __('messages.you_want_to_remove_order') }}`.replace(':id', `<b class="font-weight-bold text-danger">#${orderId}</b>`),
+                    showCancelButton: true,
+                    cancelButtonText: `{{ __('messages.Cancel') }}`,
+                    confirmButtonText: `{{ __('messages.yes') }}`,
+                    confirmButtonColor: '#f54646'
+                }).then(function(response) {
+                    if(response.value) {
+                        console.log(deleteForm)
+                        deleteForm.submit();
+                        //location.href = redirectUrl;
+                    }
+                })
+            })
+        });
+
+        @if(session()->has('error'))
+        Swal.fire({
+            text: '{{ session()->get('error') }}'
+        })
+        @endif
+        @if(session()->has('success'))
+        Swal.fire({
+            text: '{{ session()->get('success') }}',
+        })
+        @endif
     </script>
 @endpush

@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\CentralLogics\CouponLogic;
 use App\Model\Category;
+use App\Model\DeliveryHistory;
+use App\Model\DMReview;
+use App\Model\OrderDeliveryHistory;
+use App\Model\Review;
+use App\Model\TrackDeliveryman;
 use Exception;
 
 class OrderController extends Controller
@@ -82,9 +87,15 @@ class OrderController extends Controller
         $order = Order::with(['details', 'products', 'delivery_man'])->where(['id' => $id])->first();
         $departments = $this->getOrderDepartments($order);
         $editing = false;
+        /**
+         * Updates
+         *  add condition to enable editing if empty cart
+         */
         if ($request->session()->has('order_cart')) {
             $cart = session()->get('order_cart');
             if (count($cart) > 0 && $cart[0]->order_id == $order->id) {
+                $editing = true;
+            } else if(count($cart) === 0) {
                 $editing = true;
             } else {
                 session()->forget('order_cart');
@@ -153,7 +164,7 @@ class OrderController extends Controller
         }
         $cart = collect([]);
         foreach ($order->details as $details) {
-            unset($details['food_details']);
+            unset($details['product_details']);
             $details['status'] = true;
             $cart->push($details);
         }
@@ -662,5 +673,31 @@ class OrderController extends Controller
         session()->forget('order_cart');
         Toastr::success(trans('messages.order_updated_successfully'));
         return back();
+    }
+
+    /**
+     * Delete the given resource
+     *
+     * @param int $id
+     * @return void
+     */
+    public function delete($id)
+    {
+        try {
+
+            $deliveryHistories = DeliveryHistory::where('order_id', $id)->delete();
+            $deliveryManReview = DMReview::where('order_id', $id)->delete();
+            $orderDeliveryHistories = OrderDeliveryHistory::where('order_id', $id)->delete();
+            $reviews = Review::where('order_id', $id)->delete();
+            $trackDeliveryMen = TrackDeliveryman::where('order_id', $id)->delete();
+            $orderDetails = OrderDetail::where('order_id', $id)->delete();
+            $order = Order::destroy($id);
+            return back()->with('success', trans('messages.order_deleted_successfully'));
+        } catch(Exception $e) {
+            report($e);
+            return back()->with('error', trans('messages.unable_to_delete_order'));
+        }
+
+
     }
 }
