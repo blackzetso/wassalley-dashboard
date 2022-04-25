@@ -111,8 +111,11 @@
                         <div class="hs-unfold ml-1">
                             <h5>
                                 <i class="tio-shop"></i>
-                                {{__('messages.restaurant')}} : <label
-                                    class="badge badge-secondary">{{Str::limit($order->restaurant?$order->restaurant->name:__('messages.Restaurant deleted!'), 25,'...')}}</label>
+                                {{__('messages.restaurant')}} :
+                                @foreach($departments as $department)
+                                <label
+                                    class="badge badge-danger">{{ $department }}</label>
+                                @endforeach
                             </h5>
                         </div>
                         @php

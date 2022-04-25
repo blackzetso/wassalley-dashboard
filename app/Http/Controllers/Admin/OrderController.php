@@ -58,10 +58,29 @@ class OrderController extends Controller
         return view('admin-views.order.list', compact('orders', 'status', 'search'));
     }
 
+
+    /**
+     * Get all categories in the given order
+     *
+     * @param \App\Model\Order;
+     * @return Array;
+     */
+    protected function getOrderDepartments(Order $order)
+    {
+        $departmentsIds = collect($order->products)->map(function($item) {
+            return collect(json_decode($item->category_ids))->map(function($cat) {
+                return $cat->id;
+            });
+        })->flatten();
+        $departments = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
+        $departments = collect($departments)->map(fn($item) => $item['name']);
+        return $departments;
+    }
+
     public function details(Request $request, $id)
     {
-        $order = Order::with(['details', 'delivery_man'])->where(['id' => $id])->first();
-
+        $order = Order::with(['details', 'products', 'delivery_man'])->where(['id' => $id])->first();
+        $departments = $this->getOrderDepartments($order);
         $editing = false;
         if ($request->session()->has('order_cart')) {
             $cart = session()->get('order_cart');
@@ -92,7 +111,8 @@ class OrderController extends Controller
                 'categories' => $categories,
                 'category' => $category,
                 'products' => $products,
-                'keyword' => $request->query('keyword', false)
+                'keyword' => $request->query('keyword', false),
+                'departments' => $departments
             ]);
         } else {
             Toastr::info('No more orders!');

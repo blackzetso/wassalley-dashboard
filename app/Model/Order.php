@@ -54,4 +54,14 @@ class Order extends Model
         return $query->where('order_type', '!=' , 'pos');
     }
 
+
+    /**
+     * Order Products
+     * added to add all related product to the given order
+     */
+    public function products()
+    {
+        return $this->hasManyThrough(Product::class, OrderDetail::class, 'order_id', 'id','id', 'product_id');
+    }
+
 }
