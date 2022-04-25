@@ -14,6 +14,9 @@ class ConversationController extends Controller
     public function list()
     {
         $conversations = DB::table('conversations')
+            ->whereIn('user_id', function($query) {
+                $query->from('users')->select('id');
+            })
             ->latest()
             ->get();
         return view('admin-views.messages.index', compact('conversations'));

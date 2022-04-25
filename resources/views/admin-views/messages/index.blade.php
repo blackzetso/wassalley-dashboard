@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('title','Messages')
+@section('title', 'Messages')
 
 @push('css_or_js')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -8,6 +8,7 @@
         .conv-active {
             background: #f3f3f3 !important;
         }
+
     </style>
 @endpush
 
@@ -20,13 +21,17 @@
                 <div class="col-sm mb-2 mb-sm-0">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb breadcrumb-no-gutter">
-                            <li class="breadcrumb-item"><a class="breadcrumb-link" href="javascript:">{{\App\CentralLogics\translate('customers')}}</a>
+                            <li class="breadcrumb-item"><a class="breadcrumb-link"
+                                    href="javascript:">{{ \App\CentralLogics\translate('customers') }}</a>
                             </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{\App\CentralLogics\translate('customer')}} {{\App\CentralLogics\translate('messages')}}</li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {{ \App\CentralLogics\translate('customer') }}
+                                {{ \App\CentralLogics\translate('messages') }}</li>
                         </ol>
                     </nav>
 
-                    <h1 class="page-header-title">{{\App\CentralLogics\translate('conversation')}} {{\App\CentralLogics\translate('list')}}</h1>
+                    <h1 class="page-header-title">{{ \App\CentralLogics\translate('conversation') }}
+                        {{ \App\CentralLogics\translate('list') }}</h1>
                 </div>
 
                 <div class="col-sm-auto">
@@ -43,27 +48,35 @@
                     <!-- Body -->
                     <div class="card-body" style="overflow-y: scroll;height: 600px">
                         <div class="border-bottom"></div>
-                        @php($array=[])
-                        @foreach($conversations as $conv)
-                            @if(in_array($conv->user_id,$array)==false)
-                                @php(array_push($array,$conv->user_id))
-                                @php($user=\App\User::find($conv->user_id))
-                                @php($unchecked=\App\Model\Conversation::where(['user_id'=>$conv->user_id,'checked'=>0])->count())
-                                <div
-                                    class="d-flex border-bottom pb-2 pt-2 justify-content-between align-items-center customer-list {{$unchecked!=0?'conv-active':''}}"
-                                    onclick="viewConvs('{{route('admin.message.view',[$conv->user_id])}}','customer-{{$conv->user_id}}')"
+                        @php($array = [])
+                        @foreach ($conversations as $conv)
+                            @if (in_array($conv->user_id, $array) == false)
+                                @php(array_push($array, $conv->user_id))
+                                @php($user = \App\User::find($conv->user_id))
+                                @php($unchecked = \App\Model\Conversation::where(['user_id' => $conv->user_id, 'checked' => 0])->count())
+                                <div class="d-flex border-bottom pb-2 pt-2 justify-content-between align-items-center customer-list {{ $unchecked != 0 ? 'conv-active' : '' }}"
+                                    onclick="viewConvs('{{ route('admin.message.view', [$conv->user_id]) }}','customer-{{ $conv->user_id }}')"
                                     style="cursor: pointer; padding-left: 6px; border-radius: 10px;margin-top: 2px;"
-                                    id="customer-{{$conv->user_id}}">
+                                    id="customer-{{ $conv->user_id }}">
                                     <div class="avatar avatar-lg avatar-circle d-none d-md-block">
+                                        @if(isset($user['image']))
                                         <img class="avatar-img" style="width: 54px;height: 54px"
-                                             src="{{asset('storage/app/public/profile/'.$user['image'])}}"
-                                             onerror="this.src='{{asset('public/assets/admin')}}/img/160x160/img1.jpg'"
-                                             alt="Image Description">
+                                            src="{{ asset('storage/app/public/profile/' . $user['image']) }}"
+                                            onerror="this.src='{{ asset('public/assets/admin') }}/img/160x160/img1.jpg'"
+                                            alt="Image Description">
+                                        @else
+                                        <img class="avatar-img" style="width: 54px;height: 54px"
+                                            src="{{ asset('assets/admin/img/160x160/img1.jpg') }}"
+                                            onerror="this.src='{{ asset('public/assets/admin') }}/img/160x160/img1.jpg'"
+                                            alt="Image Description">
+                                        @endif
                                     </div>
+                                    @if(isset($user))
                                     <h5 class="mb-0 mr-3">
-                                        {{$user['f_name'].' '.$user['l_name']}} <span
-                                            class="{{$unchecked!=0?'badge badge-info':''}}">{{$unchecked!=0?$unchecked:''}}</span>
+                                        {{ $user['f_name'] . ' ' . $user['l_name'] }} <span
+                                            class="{{ $unchecked != 0 ? 'badge badge-info' : '' }}">{{ $unchecked != 0 ? $unchecked : '' }}</span>
                                     </h5>
+                                    @endif
                                 </div>
                             @endif
                         @endforeach
@@ -74,9 +87,10 @@
             </div>
             <div class="col-lg-8 col-8" id="view-conversation">
                 <center style="margin-top: 10%">
-                    <h4 style="color: rgba(113,120,133,0.62)">{{\App\CentralLogics\translate('view')}} {{\App\CentralLogics\translate('conversation')}}</h4>
+                    <h4 style="color: rgba(113,120,133,0.62)">{{ \App\CentralLogics\translate('view') }}
+                        {{ \App\CentralLogics\translate('conversation') }}</h4>
                 </center>
-                {{--view here--}}
+                {{-- view here --}}
             </div>
         </div>
         <!-- End Row -->
@@ -86,12 +100,12 @@
 
 @push('script_2')
     <script>
-        function viewConvs(url,id_to_active) {
+        function viewConvs(url, id_to_active) {
             $('.customer-list').removeClass('conv-active');
-            $('#'+id_to_active).addClass('conv-active');
+            $('#' + id_to_active).addClass('conv-active');
             $.get({
                 url: url,
-                success: function (data) {
+                success: function(data) {
                     $('#view-conversation').html(data.view);
                 }
             });
@@ -106,7 +120,7 @@
             $.post({
                 url: url,
                 data: $('#reply-form').serialize(),
-                success: function (data) {
+                success: function(data) {
                     toastr.success('Message sent', {
                         CloseButton: true,
                         ProgressBar: true
@@ -121,6 +135,5 @@
                 }
             });
         }
-
     </script>
 @endpush
