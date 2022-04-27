@@ -64,6 +64,19 @@ class OrderController extends Controller
     }
 
 
+    protected function getProductCategories($departmentsIds)
+    {
+        $departmentsRows = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
+        $departments = [];
+        foreach($departmentsRows as $dep) {
+            $departments[$dep['id']] = [
+                'id' => $dep['id'],
+                'name' => $dep['name']
+            ];
+        }
+        return $departments;
+    }
+
     /**
      * Get all categories in the given order
      *
@@ -77,15 +90,8 @@ class OrderController extends Controller
                 return $cat->id;
             });
         })->flatten();
-        $departmentsRows = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
-        $departments = [];
-        foreach($departmentsRows as $dep) {
-            $departments[$dep['id']] = [
-                'id' => $dep['id'],
-                'name' => $dep['name']
-            ];
-        }
-        return $departments;
+
+        return $this->getProductCategories($departmentsIds);
     }
 
     public function details(Request $request, $id)
@@ -205,10 +211,22 @@ class OrderController extends Controller
         $product = $product = Product::findOrFail($request->product_id);
         $item_type = 'product';
         $order_id = $request->order_id;
-
+        $productDepartmentsIds = [];
+        $productCategories = [];
+        if (isset($product->category_ids)) {
+            foreach(json_decode($product->category_ids) as $cat) {
+                $productDepartmentsIds[] = $cat->id;
+                $productCategories[] = [
+                    'id' => $cat->id
+                ];
+            }
+        }
+        $departments = $this->getProductCategories($productDepartmentsIds);
         return response()->json([
             'success' => 1,
-            'view' => view('admin-views.order.partials._quick-view', compact('product', 'order_id', 'item_type'))->render(),
+            'view' => view('admin-views.order.partials._quick-view', compact(
+                'product', 'order_id', 'item_type', 'departments', 'productCategories'
+                ))->render(),
         ]);
     }
 
@@ -379,10 +397,10 @@ class OrderController extends Controller
         $item_key = $request->key;
         $product = $cart_item->product ? $cart_item->product : $cart_item->campaign;
         $item_type = $cart_item->product ? 'product' : 'campaign';
-
+        $departments = $this->getOrderDepartments(Order::find($request->order_id));
         return response()->json([
             'success' => 1,
-            'view' => view('admin-views.order.partials._quick-view-cart-item', compact('order_id', 'product', 'cart_item', 'item_key', 'item_type'))->render(),
+            'view' => view('admin-views.order.partials._quick-view-cart-item', compact('order_id', 'product', 'cart_item', 'item_key', 'item_type', 'departments'))->render(),
         ]);
     }
 

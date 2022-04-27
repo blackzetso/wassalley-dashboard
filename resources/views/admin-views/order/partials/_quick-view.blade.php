@@ -59,7 +59,15 @@
         <div class="details pl-2">
             <a href="{{ route('admin.product.view', $product->id) }}"
                 class="h3 mb-2 product-title">{{ $product->name }}</a>
-
+            <div>
+                <span>الاقسام <span class="badge badge-dark">{{ count($productCategories) }}</span></span>
+            </div>
+            <div class="d-flex mt-2">
+                @foreach ($productCategories as $cat)
+                    <span class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+                @endforeach
+            </div>
+            <hr>
             <div class="mb-3 text-dark">
                 <span class="h3 font-weight-normal text-accent mr-1">
                     {{ \App\CentralLogics\Helpers::get_price_range($product, true) }}

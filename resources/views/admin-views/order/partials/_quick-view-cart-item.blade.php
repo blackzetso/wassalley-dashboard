@@ -62,6 +62,29 @@
             @else
                 <div class="h3 mb-2 product-title">{{ $item_type == 'product' ? $product->name : $product->title }}</div>
             @endif
+            @php
+                $productCategories = [];
+                if(isset($product->category_ids)) {
+                    if (is_string($product->category_ids)) {
+                        foreach(json_decode($product->category_ids) as $cat) {
+                            $productCategories[] = [
+                                'id' => $cat->id
+                        ];
+                        }
+                    } else {
+                        $productCategories = $product->category_ids;
+                    }
+                }
+            @endphp
+            <div>
+                <span>الاقسام <span class="badge badge-dark">{{ count($productCategories) }}</span></span>
+            </div>
+             <div class="d-flex mt-2">
+                @foreach($productCategories as $cat)
+                <span class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+                @endforeach
+             </div>
+             <hr>
             <div class="mb-3 text-dark">
                 <span class="h3 font-weight-normal text-accent mr-1">
                     {{ \App\CentralLogics\Helpers::get_price_range($product, true) }}
