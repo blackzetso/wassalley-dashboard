@@ -19,6 +19,14 @@ class ActivationCheckMiddleware
     public function handle($request, Closure $next)
     {
         $user = $request->user();
+        /**
+         * check authenticated user instance
+         */
+        if (!is_subclass_of($user, \App\User::class)) {
+            return $next($request);
+        }
+
+
         if ($user->status === 0) {
             return $next($request);
         }

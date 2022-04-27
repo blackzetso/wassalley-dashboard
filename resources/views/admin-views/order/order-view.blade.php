@@ -114,7 +114,7 @@
                                 {{__('messages.restaurant')}} :
                                 @foreach($departments as $department)
                                 <label
-                                    class="badge badge-danger">{{ $department }}</label>
+                                    class="badge badge-danger">{{ $department['name'] }}</label>
                                 @endforeach
                             </h5>
                         </div>
@@ -364,6 +364,15 @@
                                             <div class="col-md-5 mb-3 mb-md-0">
                                                 <strong> {{Str::limit($detail->product['name'], 20, '...')}}</strong><br>
 
+                                                @if(!$editing)
+                                                <hr>
+                                                <span>الاقسام <span class="badge badge-dark">{{ count($detail->product['category_ids']) }}</span></span>
+                                                <div class="d-flex mt-2">
+                                                   @foreach($detail->product['category_ids'] as $cat)
+                                                   <span class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+                                                   @endforeach
+                                                </div>
+                                                @endif
                                                 @if(count(json_decode($detail['variation'],true))>0)
                                                     <strong><u>{{__('messages.variation')}} : </u></strong>
                                                     @foreach(json_decode($detail['variation'],true)[0] as $key1 =>$variation)

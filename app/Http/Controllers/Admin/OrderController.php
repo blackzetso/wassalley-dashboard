@@ -72,13 +72,19 @@ class OrderController extends Controller
      */
     protected function getOrderDepartments(Order $order)
     {
-        $departmentsIds = collect($order->products)->map(function($item) {
-            return collect(json_decode($item->category_ids))->map(function($cat) {
+        $departmentsIds = collect($order->products)->map(function ($item) {
+            return collect(json_decode($item->category_ids))->map(function ($cat) {
                 return $cat->id;
             });
         })->flatten();
-        $departments = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
-        $departments = collect($departments)->map(fn($item) => $item['name']);
+        $departmentsRows = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
+        $departments = [];
+        foreach($departmentsRows as $dep) {
+            $departments[$dep['id']] = [
+                'id' => $dep['id'],
+                'name' => $dep['name']
+            ];
+        }
         return $departments;
     }
 
@@ -95,7 +101,7 @@ class OrderController extends Controller
             $cart = session()->get('order_cart');
             if (count($cart) > 0 && $cart[0]->order_id == $order->id) {
                 $editing = true;
-            } else if(count($cart) === 0) {
+            } else if (count($cart) === 0) {
                 $editing = true;
             } else {
                 session()->forget('order_cart');
@@ -103,13 +109,13 @@ class OrderController extends Controller
         }
         $deliveryMen = DeliveryMan::all();
         $category = $request->query('category_id', 0);
-        $products = Product::when($request->category_id, function($query) use($request) {
-            $query->where('category_ids', 'LIKE', '%"id":"'.$request->category_id.'"%');
+        $products = Product::when($request->category_id, function ($query) use ($request) {
+            $query->where('category_ids', 'LIKE', '%"id":"' . $request->category_id . '"%');
         })
-        ->when($request->keyword, function ($query) use($request) {
-            $query->where('name', 'LIKE',"%{$request->keyword}%");
-        })
-        ->latest()->paginate(6);
+            ->when($request->keyword, function ($query) use ($request) {
+                $query->where('name', 'LIKE', "%{$request->keyword}%");
+            })
+            ->latest()->paginate(6);
         $categories = Category::active()->get();
         $campaign_order = isset($order->details[0]->campaign) ? true : false;
         if (isset($order)) {
@@ -488,10 +494,10 @@ class OrderController extends Controller
     public function remove_from_cart(Request $request)
     {
         $cart = $request->session()->get('order_cart', collect([]));
-        $cart[$request->key]->status=false;
+        $cart[$request->key]->status = false;
         $request->session()->put('order_cart', $cart);
 
-        return response()->json([],200);
+        return response()->json([], 200);
     }
     public function update(Request $request, Order $order)
     {
@@ -685,19 +691,17 @@ class OrderController extends Controller
     {
         try {
 
-            $deliveryHistories = DeliveryHistory::where('order_id', $id)->delete();
-            $deliveryManReview = DMReview::where('order_id', $id)->delete();
-            $orderDeliveryHistories = OrderDeliveryHistory::where('order_id', $id)->delete();
-            $reviews = Review::where('order_id', $id)->delete();
-            $trackDeliveryMen = TrackDeliveryman::where('order_id', $id)->delete();
-            $orderDetails = OrderDetail::where('order_id', $id)->delete();
-            $order = Order::destroy($id);
+            DeliveryHistory::where('order_id', $id)->delete();
+            DMReview::where('order_id', $id)->delete();
+            OrderDeliveryHistory::where('order_id', $id)->delete();
+            Review::where('order_id', $id)->delete();
+            TrackDeliveryman::where('order_id', $id)->delete();
+            OrderDetail::where('order_id', $id)->delete();
+            Order::destroy($id);
             return back()->with('success', trans('messages.order_deleted_successfully'));
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             report($e);
             return back()->with('error', trans('messages.unable_to_delete_order'));
         }
-
-
     }
 }
