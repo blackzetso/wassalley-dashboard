@@ -145,7 +145,7 @@
                     </div>
 
                     <div class="d-flex justify-content-left flex-wrap">
-                        @foreach (\App\Models\AddOn::whereIn('id', $add_ons)->active()->get()
+                        @foreach (\App\Model\AddOn::whereIn('id', $add_ons)->get()
     as $key => $add_on)
                             <div class="flex-column pb-2">
                                 <input type="hidden" name="addon-price{{ $add_on->id }}"

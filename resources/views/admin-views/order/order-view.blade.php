@@ -439,7 +439,8 @@
                                                         </div>
                                                     @endforeach
                                                 @endif
-                                                @foreach (json_decode($detail['add_on_ids'], true) as $key2 => $addon)
+
+                                                {{-- @foreach (json_decode($detail['add_on_ids'], true) as $key2 => $addon)
                                                     @if ($key2 == 0)
                                                         <strong><u>{{ __('messages.addons') }} : </u></strong>
                                                     @endif
@@ -451,7 +452,7 @@
                                                         </span>
                                                     </div>
                                                     @php($total_addon_price += $addon['price'] * $addon['quantity'])
-                                                @endforeach
+                                                @endforeach --}}
                                             </div>
 
                                             <div class="col col-md-2 align-self-center">
@@ -1340,7 +1341,7 @@
                         CloseButton: true,
                         ProgressBar: true
                     });
-                    location.reload();
+                    //location.reload();
                 },
                 complete: function() {
                     $('#loading').hide();

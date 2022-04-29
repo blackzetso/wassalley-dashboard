@@ -409,10 +409,7 @@ class OrderController extends Controller
         if ($request->item_type == 'product') {
             $product = Product::find($request->id);
         }
-        /* else
-        {
-            $product = ItemCampaign::find($request->id);
-        } */
+
         $data = OrderDetail::find($request->order_details_id);
         if ($data) {
 
@@ -493,7 +490,6 @@ class OrderController extends Controller
         $addon_data = Helpers::calculate_addon_price(\App\Model\AddOn::whereIn('id', $add_on_ids)->get(), $add_on_qtys);
         $data['add_on_ids'] = json_encode($addon_data['addons']);
         //$data['total_add_on_price'] = $addon_data['total_add_on_price'];
-        // dd($data);
         $cart = $request->session()->get('order_cart', collect([]));
         if (isset($request->cart_item_key)) {
             $cart[$request->cart_item_key] = $data;

@@ -1,3 +1,27 @@
+@php
+
+$productCategories = [];
+if (isset($product->category_ids)) {
+    if (is_string($product->category_ids)) {
+        foreach (json_decode($product->category_ids) as $cat) {
+            $productCategories[] = [
+                'id' => $cat->id,
+            ];
+        }
+    } else {
+        $productCategories = $product->category_ids;
+    }
+}
+$temp = json_decode($cart_item->variation, true);
+$variations = count($temp) > 0 ? explode('-', $temp[0]['type']) : [];
+$choice_options = json_decode($product->choice_options);
+$add_ons = json_decode($product->add_ons);
+$addons = [];
+if ($cart_item['add_on_ids']) {
+    $addons = json_decode($cart_item['add_on_ids']);
+}
+$add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
+@endphp
 <style>
     .btn-check {
         position: absolute;
@@ -44,7 +68,9 @@
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
+
 <div class="modal-body">
+    {{-- Product Gallery --}}
     <div class="d-flex flex-row">
         <!-- Product gallery-->
         <div class="d-flex align-items-center justify-content-center active" style="height:9.5rem;">
@@ -60,31 +86,19 @@
                 <a href="{{ route('admin.product.view', $product->id) }}"
                     class="h3 mb-2 product-title">{{ $item_type == 'product' ? $product->name : $product->title }}</a>
             @else
-                <div class="h3 mb-2 product-title">{{ $item_type == 'product' ? $product->name : $product->title }}</div>
+                <div class="h3 mb-2 product-title">{{ $item_type == 'product' ? $product->name : $product->title }}
+                </div>
             @endif
-            @php
-                $productCategories = [];
-                if(isset($product->category_ids)) {
-                    if (is_string($product->category_ids)) {
-                        foreach(json_decode($product->category_ids) as $cat) {
-                            $productCategories[] = [
-                                'id' => $cat->id
-                        ];
-                        }
-                    } else {
-                        $productCategories = $product->category_ids;
-                    }
-                }
-            @endphp
+
             <div>
                 <span>الاقسام <span class="badge badge-dark">{{ count($productCategories) }}</span></span>
             </div>
-             <div class="d-flex mt-2">
-                @foreach($productCategories as $cat)
-                <span class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+            <div class="d-flex mt-2">
+                @foreach ($productCategories as $cat)
+                    <span class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
                 @endforeach
-             </div>
-             <hr>
+            </div>
+            <hr>
             <div class="mb-3 text-dark">
                 <span class="h3 font-weight-normal text-accent mr-1">
                     {{ \App\CentralLogics\Helpers::get_price_range($product, true) }}
@@ -107,6 +121,8 @@
             {{-- <div style="margin-left: -1%" class="sharethis-inline-share-buttons"></div> --}}
         </div>
     </div>
+    {{-- End Product Gallery --}}
+
     <div class="row pt-2">
         <div class="col-12">
             <h4>{{ __('messages.description') }}</h4>
@@ -121,9 +137,7 @@
                 <input type="hidden" name="order_details_id" value="{{ $cart_item['id'] }}">
                 <input type="hidden" name="order_id" value="{{ $order_id }}">
 
-                @php($temp = json_decode($cart_item->variation, true))
-                @php($variations = count($temp) > 0 ? explode('-', $temp[0]['type']) : [])
-                @foreach (json_decode($product->choice_options) as $key => $choice)
+                @foreach ($choice_options as $key => $choice)
                     <div class="h3 p-0 pt-2">{{ $choice->title }}
                     </div>
 
@@ -146,7 +160,8 @@
                         <div class="input-group input-group--style-2 pr-3" style="width: 160px;">
                             <span class="input-group-btn">
                                 <button class="btn btn-number text-dark" type="button" data-type="minus"
-                                    data-field="quantity" {{ $cart_item['quantity'] <= 1 ? 'disabled="disabled"' : '' }}
+                                    data-field="quantity"
+                                    {{ $cart_item['quantity'] <= 1 ? 'disabled="disabled"' : '' }}
                                     style="padding: 10px">
                                     <i class="tio-remove  font-weight-bold"></i>
                                 </button>
@@ -163,16 +178,16 @@
                         </div>
                     </div>
                 </div>
-                @php($add_ons = json_decode($product->add_ons))
-                @if (count($add_ons) > 0)
+                <!-- Quantity + Add to cart -->
+
+                @if (count($add_ons) > 0 /* && isset($cart_item['add_ons']) */)
                     <div class="h3 p-0 pt-2">{{ __('messages.addon') }}
                     </div>
-
                     <div class="d-flex justify-content-left flex-wrap">
-                        @php($addons = array_column(json_decode($cart_item['add_ons'], true), 'quantity', 'id'))
-                        @foreach (\App\Models\AddOn::whereIn('id', $add_ons)->active()->get()
-    as $key => $add_on)
-                            @php($checked = array_key_exists($add_on->id, $addons))
+                        @foreach ($add_ons_data as $key => $add_on)
+                            @php
+                                $checked = array_key_exists($add_on->id, $addons);
+                            @endphp
                             <div class="flex-column pb-2">
                                 <input type="hidden" name="addon-price{{ $add_on->id }}"
                                     value="{{ $add_on->price }}">
@@ -227,6 +242,8 @@
         </div>
     </div>
 </div>
+
+
 
 <script type="text/javascript">
     cartQuantityInitialize();
