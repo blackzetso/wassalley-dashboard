@@ -421,8 +421,12 @@
                                                         class="badge badge-dark">{{ count($productCategories) }}</span></span>
                                                 <div class="d-flex mt-2">
                                                     @foreach ($productCategories as $cat)
-                                                        <span
-                                                            class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+                                                        @if (isset($departments[$cat['id']]))
+                                                            <span
+                                                                class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span>
+                                                        @endif
+                                                        {{-- <span
+                                                            class="badge badge-danger mx-1">{{ $departments[$cat['id']]['name'] }}</span> --}}
                                                     @endforeach
                                                 </div>
                                                 @if (count(json_decode($detail['variation'], true)) > 0)
@@ -562,18 +566,18 @@
 
                         if ($editing) {
                             /* $restaurant_discount = \App\CentralLogics\Helpers::get_restaurant_discount($order->restaurant);
-                                                                            if(isset($restaurant_discount))
-                                                                            {
-                                                                                if($product_price + $total_addon_price < $restaurant_discount['min_purchase'])
-                                                                                {
-                                                                                    $restaurant_discount_amount = 0;
-                                                                                }
+                                                                                                    if(isset($restaurant_discount))
+                                                                                                    {
+                                                                                                        if($product_price + $total_addon_price < $restaurant_discount['min_purchase'])
+                                                                                                        {
+                                                                                                            $restaurant_discount_amount = 0;
+                                                                                                        }
 
-                                                                                if($restaurant_discount_amount > $restaurant_discount['max_discount'])
-                                                                                {
-                                                                                    $restaurant_discount_amount = $restaurant_discount['max_discount'];
-                                                                                }
-                                                                            } */
+                                                                                                        if($restaurant_discount_amount > $restaurant_discount['max_discount'])
+                                                                                                        {
+                                                                                                            $restaurant_discount_amount = $restaurant_discount['max_discount'];
+                                                                                                        }
+                                                                                                    } */
                             $coupon_discount_amount = $coupon ? \App\CentralLogics\CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $restaurant_discount_amount) : $order['coupon_discount_amount'];
                             //$tax = $order->restaurant->tax;
                             $tax = 0;
@@ -586,9 +590,9 @@
                             $restaurant_discount_amount = round($restaurant_discount_amount, 2);
 
                             /* if($order->restaurant->free_delivery)
-                                                                            {
-                                                                                $del_c = 0;
-                                                                            } */
+                                                                                                    {
+                                                                                                        $del_c = 0;
+                                                                                                    } */
 
                             $free_delivery_over = \App\Model\BusinessSetting::where('key', 'free_delivery_over')->first();
                             if ($free_delivery_over) {
