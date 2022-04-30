@@ -68,7 +68,7 @@ class OrderController extends Controller
     {
         $departmentsRows = Category::whereIn('id', $departmentsIds)->select('id', 'name')->get()->toArray();
         $departments = [];
-        foreach($departmentsRows as $dep) {
+        foreach ($departmentsRows as $dep) {
             $departments[$dep['id']] = [
                 'id' => $dep['id'],
                 'name' => $dep['name']
@@ -214,7 +214,7 @@ class OrderController extends Controller
         $productDepartmentsIds = [];
         $productCategories = [];
         if (isset($product->category_ids)) {
-            foreach(json_decode($product->category_ids) as $cat) {
+            foreach (json_decode($product->category_ids) as $cat) {
                 $productDepartmentsIds[] = $cat->id;
                 $productCategories[] = [
                     'id' => $cat->id
@@ -225,8 +225,12 @@ class OrderController extends Controller
         return response()->json([
             'success' => 1,
             'view' => view('admin-views.order.partials._quick-view', compact(
-                'product', 'order_id', 'item_type', 'departments', 'productCategories'
-                ))->render(),
+                'product',
+                'order_id',
+                'item_type',
+                'departments',
+                'productCategories'
+            ))->render(),
         ]);
     }
 
@@ -397,7 +401,11 @@ class OrderController extends Controller
         $item_key = $request->key;
         $product = $cart_item->product ? $cart_item->product : $cart_item->campaign;
         $item_type = $cart_item->product ? 'product' : 'campaign';
-        $departments = $this->getOrderDepartments(Order::find($request->order_id));
+        $departmentsIds = [];
+        foreach(json_decode($product->category_ids) as $item) {
+            $departmentsIds[] = $item->id;
+        }
+        $departments = $this->getProductCategories($departmentsIds);
         return response()->json([
             'success' => 1,
             'view' => view('admin-views.order.partials._quick-view-cart-item', compact('order_id', 'product', 'cart_item', 'item_key', 'item_type', 'departments'))->render(),
@@ -486,9 +494,24 @@ class OrderController extends Controller
             }
             $add_on_ids = $request['addon_id'];
         }
+        $addOnRows = \App\Model\AddOn::whereIn('id', $add_on_ids)->get();
+        $addon_data = Helpers::calculate_addon_price($addOnRows, $add_on_qtys);
+        $cartAddOns = [];
+        foreach ($addon_data['addons'] as $item) {
+            $cartAddOns[$item] = [
+                'id' => $item,
+                'price' => $request['addon-price' . $item],
+                'quantity' => $request['addon-quantity' . $item],
+            ];
+        }
 
-        $addon_data = Helpers::calculate_addon_price(\App\Model\AddOn::whereIn('id', $add_on_ids)->get(), $add_on_qtys);
-        $data['add_on_ids'] = json_encode($addon_data['addons']);
+        foreach ($addOnRows as $item) {
+            $cartAddOns[$item->id]['name'] = $item->name;
+        }
+
+        //dd($request->all(), $addon_data);
+
+        $data['add_on_ids'] = json_encode($cartAddOns);
         //$data['total_add_on_price'] = $addon_data['total_add_on_price'];
         $cart = $request->session()->get('order_cart', collect([]));
         if (isset($request->cart_item_key)) {
@@ -617,8 +640,10 @@ class OrderController extends Controller
                     } else {
                         $c->save();
                     }
-
-                    $total_addon_price += $c['total_add_on_price'];
+                    foreach (json_decode($c['add_on_ids'] )as $item) {
+                        $total_addon_price += $item->price * $item->quantity;
+                    }
+                    //$total_addon_price += $c['total_add_on_price'];
                     $product_price += $price * $c['quantity'];
                     $restaurant_discount_amount += $c['discount_on_product'] * $c['quantity'];
                 } else {

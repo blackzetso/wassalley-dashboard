@@ -58,7 +58,12 @@ class Helpers
 
     public static function product_discount_calculate($product, $price, $restaurant)
     {
-        return 0;
+        if($product['discount_type'] == 'percent') {
+            $price_discount = ($price / 100) * $product['discount'];
+        } else {
+            $price_discount = $product['discount'];
+        }
+        return $price_discount;
        /*  $restaurant_discount = self::get_restaurant_discount($restaurant);
         if(isset($restaurant_discount))
         {
@@ -745,6 +750,20 @@ class Helpers
                 return $min_shipping_charge;
             }
         }
+    }
+
+    public static function get_product_discount($product)
+    {
+        $restaurant_discount = self::get_restaurant_discount($product->restaurant);
+        if ($restaurant_discount) {
+            $discount = $restaurant_discount['discount'].' %';
+        }
+        else if($product['discount_type'] == 'percent') {
+            $discount = $product['discount'].' %';
+        } else {
+            $discount = self::format_currency($product['discount']);
+        }
+        return $discount;
     }
 
     public static function calculate_addon_price($addons,$add_on_qtys)

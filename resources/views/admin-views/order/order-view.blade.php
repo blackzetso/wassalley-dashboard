@@ -440,7 +440,7 @@
                                                     @endforeach
                                                 @endif
 
-                                                {{-- @foreach (json_decode($detail['add_on_ids'], true) as $key2 => $addon)
+                                                @foreach (json_decode($detail['add_on_ids'], true) as $key2 => $addon)
                                                     @if ($key2 == 0)
                                                         <strong><u>{{ __('messages.addons') }} : </u></strong>
                                                     @endif
@@ -452,7 +452,7 @@
                                                         </span>
                                                     </div>
                                                     @php($total_addon_price += $addon['price'] * $addon['quantity'])
-                                                @endforeach --}}
+                                                @endforeach
                                             </div>
 
                                             <div class="col col-md-2 align-self-center">
@@ -462,16 +462,19 @@
                                             <div class="col col-md-2 align-self-center">
                                                 <h5>{{ $detail['quantity'] }}</h5>
                                             </div>
+                                            <div class="col col-md-1 align-self-center">
+                                                <h5>-{{ $detail['discount_on_product'] }}</h5>
+                                            </div>
 
-                                            <div class="col col-md-3 align-self-center text-right">
-                                                @php($amount = $detail['price'] * $detail['quantity'])
+                                            <div class="col col-md-2 align-self-center text-right">
+                                                @php($amount = $detail['price'] * $detail['quantity'] )
                                                 <h5>{{ \App\CentralLogics\Helpers::format_currency($amount) }}</h5>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 @php($product_price += $amount)
-                                @php($restaurant_discount_amount += $detail['discount_on_food'] * $detail['quantity'])
+                                @php($restaurant_discount_amount += $detail['discount_on_product'] * $detail['quantity'])
                                 <!-- End Media -->
                                 <hr>
                             @elseif(isset($detail->item_campaign_id) && $detail->status)
@@ -536,14 +539,13 @@
                                                 @endforeach
                                             </div>
 
-                                            <div class="col col-md-2 align-self-center">
-                                                <h6>{{ \App\CentralLogics\Helpers::format_currency($detail['price']) }}
-                                                </h6>
-                                            </div>
+
                                             <div class="col col-md-1 align-self-center">
                                                 <h5>{{ $detail['quantity'] }}</h5>
                                             </div>
-
+                                            <div class="col col-md-1 align-self-center">
+                                                <h5>{{ $detail['dicount_on_product'] }}</h5>
+                                            </div>
                                             <div class="col col-md-3 align-self-center text-right">
                                                 @php($amount = $detail['price'] * $detail['quantity'])
                                                 <h5>{{ \App\CentralLogics\Helpers::format_currency($amount) }}</h5>
@@ -552,7 +554,7 @@
                                     </div>
                                 </div>
                                 @php($product_price += $amount)
-                                @php($restaurant_discount_amount += $detail['discount_on_food'] * $detail['quantity'])
+                                @php($restaurant_discount_amount += $detail['discount_on_product'] * $detail['quantity'])
                                 <!-- End Media -->
                                 <hr>
                             @endif
@@ -605,7 +607,7 @@
                                 }
                             }
                         } else {
-                            $restaurant_discount_amount = $order['restaurant_discount_amount'];
+                            //$restaurant_discount_amount = $order['restaurant_discount_amount'];
                         }
 
                         ?>
@@ -1288,7 +1290,7 @@
         }
 
         // remove function getVariantPrice
-        {{-- function getVariantPrice() {
+        function getVariantPrice() {
                 if ($('#add-to-cart-form input[name=quantity]').val() > 0) {
                     $.ajaxSetup({
                         headers: {
@@ -1297,7 +1299,7 @@
                     });
                     $.ajax({
                         type: "POST",
-                        url: '{{ route('admin.food.variant-price') }}',
+                        url: '{{ route('admin.product.variant-price') }}',
                         data: $('#add-to-cart-form').serializeArray(),
                         success: function (data) {
                             $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
@@ -1305,7 +1307,7 @@
                         }
                     });
                 }
-            } --}}
+            }
 
         function update_order_item(form_id = 'add-to-cart-form') {
             $.ajaxSetup({
@@ -1341,7 +1343,7 @@
                         CloseButton: true,
                         ProgressBar: true
                     });
-                    //location.reload();
+                    location.reload();
                 },
                 complete: function() {
                     $('#loading').hide();

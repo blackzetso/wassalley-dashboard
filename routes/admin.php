@@ -101,6 +101,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::get('status/{id}/{status}', 'NotificationController@status')->name('status');
             Route::delete('delete/{id}', 'NotificationController@delete')->name('delete');
         });
+        Route::post('product/variant-price', 'ProductController@variant_price')->name('product.variant-price');
 
         Route::group(['prefix' => 'product', 'as' => 'product.'], function () {
             Route::get('add-new', 'ProductController@index')->name('add-new');

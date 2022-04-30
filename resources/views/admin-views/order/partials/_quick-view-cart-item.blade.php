@@ -18,7 +18,9 @@ $choice_options = json_decode($product->choice_options);
 $add_ons = json_decode($product->add_ons);
 $addons = [];
 if ($cart_item['add_on_ids']) {
-    $addons = json_decode($cart_item['add_on_ids']);
+    foreach(json_decode($cart_item['add_on_ids'])  as $item) {
+        $addons[$item->id] = $item;
+    }
 }
 $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
 @endphp
@@ -159,18 +161,18 @@ $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
                     <div class="product-quantity d-flex align-items-center">
                         <div class="input-group input-group--style-2 pr-3" style="width: 160px;">
                             <span class="input-group-btn">
-                                <button class="btn btn-number text-dark" type="button" data-type="minus"
+                                <button class="btn btn-number text-dark" type="button" data-type="minus" id="cart_item_quantity_minus"
                                     data-field="quantity"
                                     {{ $cart_item['quantity'] <= 1 ? 'disabled="disabled"' : '' }}
                                     style="padding: 10px">
                                     <i class="tio-remove  font-weight-bold"></i>
                                 </button>
                             </span>
-                            <input type="text" name="quantity"
+                            <input type="number" name="quantity"
                                 class="form-control input-number text-center cart-qty-field" placeholder="1"
                                 value="{{ $cart_item['quantity'] }}" min="1" max="100">
                             <span class="input-group-btn">
-                                <button class="btn btn-number text-dark" type="button" data-type="plus"
+                                <button class="btn btn-number text-dark" type="button" data-type="plus" id="cart_item_quantity_plus"
                                     data-field="quantity" style="padding: 10px">
                                     <i class="tio-add  font-weight-bold"></i>
                                 </button>
@@ -205,7 +207,7 @@ $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
                                             class="tio-remove  font-weight-bold"></i></button>
                                     <input type="number" name="addon-quantity{{ $add_on->id }}"
                                         class="form-control text-center border-0 h-100" placeholder="1"
-                                        value="{{ $checked ? $addons[$add_on->id] : 1 }}" min="1" max="100" readonly>
+                                        value="{{ $checked ? $addons[$add_on->id]->quantity : 1 }}" min="1" max="100" readonly>
                                     <button class="btn btn-sm h-100 text-dark px-0" type="button"
                                         onclick="this.parentNode.querySelector('input[type=number]').stepUp(), getVariantPrice()"><i
                                             class="tio-add  font-weight-bold"></i></button>
@@ -214,7 +216,7 @@ $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
                         @endforeach
                     </div>
                 @endif
-                <div class="row no-gutters d-none mt-2 text-dark" id="chosen_price_div">
+                <div class="row no-gutters d-block mt-2 text-dark" id="chosen_price_div">
                     <div class="col-2">
                         <div class="product-description-label">{{ __('Total Price') }}:</div>
                     </div>
@@ -224,7 +226,6 @@ $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
                         </div>
                     </div>
                 </div>
-
                 <div class="d-flex justify-content-between mt-2">
                     <button class="btn btn-sm btn-danger" onclick="removeFromCart({{ $item_key }})" type="button"
                         style="width:37%;">
@@ -251,4 +252,23 @@ $add_ons_data = \App\Model\AddOn::whereIn('id', $add_ons)->get();
     $('#add-to-cart-form input').on('change', function() {
         getVariantPrice();
     });
+
+   /*  var productQuantityInput = document.querySelector('input[name="quantity"]');
+    var minusButton = document.querySelector('#cart_item_quantity_minus');
+    var plusButton = document.querySelector('#cart_item_quantity_plus');
+
+    productQuantityInput.addEventListener('change', calculateTotalProductPrice);
+    minusButton.addEventListener('click', calculateTotalProductPrice);
+    plusButton.addEventListener('click', calculateTotalProductPrice);
+    function calculateTotalProductPrice() {
+        var productPrice = {{ $product->price }}
+        var productQuantity = productQuantityInput.value;
+        var totalPrice = parseInt(productPrice) * parseInt(productQuantityInput.value);
+        $('#chosen_price').text(totalPrice);
+        console.log(totalPrice);
+    }
+
+
+    calculateTotalProductPrice(); */
+
 </script>

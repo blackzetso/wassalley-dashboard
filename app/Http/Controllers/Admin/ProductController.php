@@ -117,7 +117,7 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:products',
             'category_id' => 'required',
-            'image' => 'required',           
+            'image' => 'required',
           	'unit' => 'required',
             'price' => 'required|numeric',
         ], [
@@ -139,7 +139,7 @@ class ProductController extends Controller
         if ($request['price'] <= $dis || $validator->fails()) {
             return response()->json(['errors' => Helpers::error_processor($validator)]);
         }
-      
+
 
         $img_names = [];
         if (!empty($request->file('images'))) {
@@ -153,7 +153,7 @@ class ProductController extends Controller
         }
 
         $product = new Product;
-        $product->name = $request->name[array_search('en', $request->lang)];     
+        $product->name = $request->name[array_search('en', $request->lang)];
       		$product->amount = $request->amount;
               $product->unit = $request->unit;
 
@@ -337,9 +337,9 @@ class ProductController extends Controller
             ]);
         }
 
-      
+
         $product->category_ids = json_encode($category);
-      
+
         $product->amount = $request->amount;
         $product->unit = $request->unit;
         $product->category_ids = json_encode($category);
@@ -587,5 +587,51 @@ class ProductController extends Controller
             ];
         }
         return (new FastExcel($storage))->download('products.xlsx');
+    }
+
+    public function variant_price(Request $request)
+    {
+        if($request->item_type=='product')
+        {
+            $product = Product::find($request->id);
+        }
+       /*  else
+        {
+            $product = ItemCampaign::find($request->id);
+        } */
+        // $product = Food::withoutGlobalScope(RestaurantScope::class)->find($request->id);
+        $str = '';
+        $quantity = 0;
+        $price = 0;
+        $addon_price = 0;
+
+        foreach (json_decode($product->choice_options) as $key => $choice) {
+            if ($str != null) {
+                $str .= '-' . str_replace(' ', '', $request[$choice->name]);
+            } else {
+                $str .= str_replace(' ', '', $request[$choice->name]);
+            }
+        }
+
+        if($request['addon_id'])
+        {
+            foreach($request['addon_id'] as $id)
+            {
+                $addon_price+= $request['addon-price'.$id]*$request['addon-quantity'.$id];
+            }
+        }
+
+        if ($str != null) {
+            $count = count(json_decode($product->variations));
+            for ($i = 0; $i < $count; $i++) {
+                if (json_decode($product->variations)[$i]->type == $str) {
+                    $price = json_decode($product->variations)[$i]->price - Helpers::product_discount_calculate($product, json_decode($product->variations)[$i]->price,$product->restaurant);
+                }
+            }
+        } else {
+            $price = $product->price - Helpers::product_discount_calculate($product, $product->price,$product->restaurant);
+        }
+
+        return array('price' => Helpers::format_currency(($price * $request->quantity)+$addon_price));
     }
 }
