@@ -116,7 +116,7 @@
                     </div>
                 @endforeach
 
-                <!-- Quantity + Add to cart -->
+                {{-- <!-- Quantity + Add to cart -->
                 <div class="d-flex justify-content-between">
                     <div class="product-description-label mt-2 text-dark h3">{{ __('messages.Quantity') }}:</div>
                     <div class="product-quantity d-flex align-items-center">
@@ -127,9 +127,9 @@
                                     <i class="tio-remove  font-weight-bold"></i>
                                 </button>
                             </span>
-                            <input type="text" name="quantity"
+                            <input type="number" name="quantity"
                                 class="form-control input-number text-center cart-qty-field" placeholder="1" value="1"
-                                min="1" max="100">
+                                min="1" max="100" step="0.1">
                             <span class="input-group-btn">
                                 <button class="btn btn-number text-dark" type="button" data-type="plus"
                                     data-field="quantity" style="padding: 10px">
@@ -137,6 +137,40 @@
                                 </button>
                             </span>
                         </div>
+                    </div>
+                </div> --}}
+                 <!-- Quantity + Add to cart -->
+                 <div class="d-flex justify-content-between">
+                    <div class="product-description-label mt-2 text-dark h3">{{\App\CentralLogics\translate('Quantity')}}
+                        :
+                    </div>
+                    <div class="product-quantity d-flex align-items-center">
+                        <div class="input-group input-group--style-2 pr-3"
+                             style="width: 160px;">
+                             <span class="input-group-btn">
+                                <button class="btn btn-number text-dark" type="button"
+                                        data-type="minus" data-field="quantity" data-amount="{{$product->amount / 8}}"
+                                        disabled="disabled" style="padding: 10px">
+                                        <i class="tio-remove  font-weight-bold"></i>
+                                </button>
+                            </span>
+
+
+                            <input type="text" name="quantity"
+                                   class="form-control input-number text-center cart-qty-field"
+                                   value="{{$product->amount / 8}}"
+                                   placeholder="{{$product->amount / 8}}" min="{{$product->amount / 8}}"
+                                   step="{{$product->amount / 8}}" max="{{($product->amount / 8 )* 100}}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-number text-dark" type="button" data-type="plus"
+                                        data-amount="{{$product->amount / 8}}"
+                                        data-field="quantity" style="padding: 10px">
+                                        <i class="tio-add  font-weight-bold"></i>
+                                </button>
+                            </span>
+                        </div>
+
+
                     </div>
                 </div>
                 @php($add_ons = json_decode($product->add_ons))

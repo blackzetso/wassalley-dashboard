@@ -27,24 +27,25 @@ class POSController extends Controller
         $keyword = $request->keyword;
         $key = explode(' ', $keyword);
 
-        $products = Product::
-        when($request->has('category_id') && $request['category_id'] != 0, function ($query) use ($request) {
-            $query->whereJsonContains('category_ids', [[['id' => (string)$request['category_id']]]]);
-        })
-            ->when($keyword, function ($query) use ($key) {
-                return $query->where(function ($q) use ($key) {
+        $products = Product::when($request->has('category_id') && $request['category_id'] != 0, function ($query) use ($request) {
+                //$query->whereJsonContains('category_ids', [[['id' => (string)$request['category_id']]]]);
+                $query->where('category_ids', 'LIKE', "%".'"id":"'.$request['category_id'].'"'."%");
+            })
+            ->when($keyword, function ($query) use ($key, $keyword) {
+                $query->where('name', 'like', "%$keyword%");
+                /* return $query->where(function ($q) use ($key) {
                     foreach ($key as $value) {
                         $q->orWhere('name', 'like', "%{$value}%");
                     }
-                });
+                }); */
             })
             ->active()->latest()->paginate(Helpers::getPagination());
 
         $current_branch = Admin::find(auth('admin')->id());
         $branches = Branch::select('id', 'name')->get();
-      $deliveries=DeliveryMan::get();
+        $deliveries = DeliveryMan::get();
 
-        return view('admin-views.pos.index', compact('categories', 'products', 'category', 'keyword', 'current_branch', 'branches','deliveries'));
+        return view('admin-views.pos.index', compact('categories', 'products', 'category', 'keyword', 'current_branch', 'branches', 'deliveries'));
     }
 
     public function quick_view(Request $request)
@@ -147,7 +148,7 @@ class POSController extends Controller
         return back();
     }
 
-  public function update_delivery_fee(Request $request)
+    public function update_delivery_fee(Request $request)
     {
 
         $cart = $request->session()->get('cart', collect([]));
@@ -203,7 +204,6 @@ class POSController extends Controller
                         ]);
                     }
                 }
-
             }
         }
         //Check the string and decreases quantity for the stock
@@ -274,7 +274,7 @@ class POSController extends Controller
     public function store_keys(Request $request)
     {
         session()->put($request['key'], $request['value']);
-        return response()->json('',200);
+        return response()->json('', 200);
     }
 
     //order
@@ -299,7 +299,7 @@ class POSController extends Controller
 
         $orders = $query->latest()->paginate(Helpers::getPagination())->appends($query_param);
 
-        return view('admin-views.pos.order.list', compact('orders','search'));
+        return view('admin-views.pos.order.list', compact('orders', 'search'));
     }
 
     public function order_details($id)
@@ -339,7 +339,7 @@ class POSController extends Controller
         $order = new Order();
         $order->id = $order_id;
 
-        $order->user_id = session()->get('customer_id')??null;
+        $order->user_id = session()->get('customer_id') ?? null;
         $order->coupon_discount_title = $request->coupon_discount_title == 0 ? null : 'coupon_discount_title';
         $order->payment_status = 'paid';
         $order->order_status = 'delivered';
@@ -351,7 +351,7 @@ class POSController extends Controller
         $order->delivery_address_id = $request->delivery_address_id ?? null;
         $order->delivery_date = Carbon::now()->format('Y-m-d');
         $order->delivery_time = Carbon::now()->format('H:i:s');
-      	$order->delivery_man_id=$request->delivery_man_id;
+        $order->delivery_man_id = $request->delivery_man_id;
         $order->order_note = null;
         $order->checked = 1;
         $order->created_at = now();
@@ -400,19 +400,18 @@ class POSController extends Controller
             $total_price -= $extra_discount;
         }
 
-      if (isset($cart['delivery_charge'])) {
+        if (isset($cart['delivery_charge'])) {
             $delivery_charge = $cart['delivery_charge'];
-
         }
         $tax = isset($cart['tax']) ? $cart['tax'] : 0;
         $total_tax_amount = ($tax > 0) ? (($total_price * $tax) / 100) : $total_tax_amount;
         try {
-            $order->extra_discount = $extra_discount??0;
+            $order->extra_discount = $extra_discount ?? 0;
             $order->total_tax_amount = $total_tax_amount;
             $order->order_amount = $total_price + $total_tax_amount + $order->delivery_charge;
-			$order->delivery_charge=isset($delivery_charge) ? $delivery_charge : 0;
+            $order->delivery_charge = isset($delivery_charge) ? $delivery_charge : 0;
             $order->coupon_discount_amount = 0.00;
-            $order->branch_id = session()->get('branch_id')??1;
+            $order->branch_id = session()->get('branch_id') ?? 1;
             $order->save();
             foreach ($order_details as $key => $item) {
                 $order_details[$key]['order_id'] = $order->id;

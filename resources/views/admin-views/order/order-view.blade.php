@@ -283,7 +283,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- food cart -->
+                        <!-- product cart -->
                         @if ($editing && !$campaign_order)
                             <div class="row border-top pt-1">
                                 <div class="col-12 d-flex flex-wrap justify-content-between ">
@@ -403,6 +403,7 @@
                                                 <strong>
                                                     {{ Str::limit($detail->product['name'], 20, '...') }}</strong><br>
                                                 @php
+
                                                     $productCategories = [];
                                                     if (isset($detail->product['category_ids'])) {
                                                         if (is_string($detail->product['category_ids'])) {
@@ -467,7 +468,7 @@
                                             </div>
 
                                             <div class="col col-md-2 align-self-center text-right">
-                                                @php($amount = $detail['price'] * $detail['quantity'] )
+                                                @php($amount = $detail['price'] * $detail['quantity'])
                                                 <h5>{{ \App\CentralLogics\Helpers::format_currency($amount) }}</h5>
                                             </div>
                                         </div>
@@ -480,7 +481,7 @@
                             @elseif(isset($detail->item_campaign_id) && $detail->status)
                                 <?php
                                 if (!$editing) {
-                                    $detail->campaign = json_decode($detail->food_details, true);
+                                    $detail->campaign = json_decode($detail->product_details, true);
                                 }
                                 ?>
                                 <!-- Media -->
@@ -569,18 +570,18 @@
 
                         if ($editing) {
                             /* $restaurant_discount = \App\CentralLogics\Helpers::get_restaurant_discount($order->restaurant);
-                                                                                                    if(isset($restaurant_discount))
-                                                                                                    {
-                                                                                                        if($product_price + $total_addon_price < $restaurant_discount['min_purchase'])
-                                                                                                        {
-                                                                                                            $restaurant_discount_amount = 0;
-                                                                                                        }
+                                                                                                                            if(isset($restaurant_discount))
+                                                                                                                            {
+                                                                                                                                if($product_price + $total_addon_price < $restaurant_discount['min_purchase'])
+                                                                                                                                {
+                                                                                                                                    $restaurant_discount_amount = 0;
+                                                                                                                                }
 
-                                                                                                        if($restaurant_discount_amount > $restaurant_discount['max_discount'])
-                                                                                                        {
-                                                                                                            $restaurant_discount_amount = $restaurant_discount['max_discount'];
-                                                                                                        }
-                                                                                                    } */
+                                                                                                                                if($restaurant_discount_amount > $restaurant_discount['max_discount'])
+                                                                                                                                {
+                                                                                                                                    $restaurant_discount_amount = $restaurant_discount['max_discount'];
+                                                                                                                                }
+                                                                                                                            } */
                             $coupon_discount_amount = $coupon ? \App\CentralLogics\CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $restaurant_discount_amount) : $order['coupon_discount_amount'];
                             //$tax = $order->restaurant->tax;
                             $tax = 0;
@@ -593,9 +594,9 @@
                             $restaurant_discount_amount = round($restaurant_discount_amount, 2);
 
                             /* if($order->restaurant->free_delivery)
-                                                                                                    {
-                                                                                                        $del_c = 0;
-                                                                                                    } */
+                                                                                                                            {
+                                                                                                                                $del_c = 0;
+                                                                                                                            } */
 
                             $free_delivery_over = \App\Model\BusinessSetting::where('key', 'free_delivery_over')->first();
                             if ($free_delivery_over) {
@@ -654,7 +655,7 @@
 
                                     <dt class="col-sm-6">{{ __('messages.total') }}:</dt>
                                     <dd class="col-sm-6">
-                                        {{ \App\CentralLogics\Helpers::format_currency($product_price +$del_c +$total_tax_amount +$total_addon_price -$coupon_discount_amount -$restaurant_discount_amount) }}
+                                        {{ \App\CentralLogics\Helpers::format_currency($product_price + $del_c + $total_tax_amount + $total_addon_price - $coupon_discount_amount - $restaurant_discount_amount) }}
                                     </dd>
                                 </dl>
                                 <!-- End Row -->
@@ -1207,36 +1208,52 @@
         }
 
         function cartQuantityInitialize() {
+
             $('.btn-number').click(function(e) {
                 e.preventDefault();
 
                 var fieldName = $(this).attr('data-field');
                 var type = $(this).attr('data-type');
                 var input = $("input[name='" + fieldName + "']");
-                var currentVal = parseInt(input.val());
+                var init_value = $(this).attr('data-amount');
+
+                // var currentVal = parseInt(input.val());
+                var currentVal = parseFloat(input.val());
 
                 if (!isNaN(currentVal)) {
                     if (type == 'minus') {
 
                         if (currentVal > input.attr('min')) {
-                            input.val(currentVal - 1).change();
+                            //input.val(currentVal - 1).change();
+                            currentVal -= parseFloat(init_value);
+                            input.val(currentVal).change();
+
+
                         }
-                        if (parseInt(input.val()) == input.attr('min')) {
+                        //if (parseInt(input.val()) == input.attr('min')) {
+                        if (parseFloat(input.val()) == input.attr('min')) {
+                            //if (parseInt(input.val()) == input.attr('min')) {
+
                             $(this).attr('disabled', true);
                         }
 
                     } else if (type == 'plus') {
 
                         if (currentVal < input.attr('max')) {
-                            input.val(currentVal + 1).change();
+                            //input.val(currentVal + 1).change();
+                            currentVal += parseFloat(init_value);
+                            input.val(currentVal).change();
+
                         }
-                        if (parseInt(input.val()) == input.attr('max')) {
+                        //if (parseInt(input.val()) == input.attr('max')) {
+                        if (parseFloat(input.val()) == input.attr('max')) {
+
                             $(this).attr('disabled', true);
                         }
 
                     }
                 } else {
-                    input.val(0);
+                    input.val(parseFloat(init_value));
                 }
             });
 
@@ -1245,11 +1262,12 @@
             });
 
             $('.input-number').change(function() {
-
-                minValue = parseInt($(this).attr('min'));
-                maxValue = parseInt($(this).attr('max'));
-                valueCurrent = parseInt($(this).val());
-
+                //minValue = parseInt($(this).attr('min'));
+                //maxValue = parseInt($(this).attr('max'));
+                //valueCurrent = parseInt($(this).val());
+                minValue = parseFloat($(this).attr('min'));
+                maxValue = parseFloat($(this).attr('max'));
+                valueCurrent = parseFloat($(this).val());
                 var name = $(this).attr('name');
                 if (valueCurrent >= minValue) {
                     $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
@@ -1257,7 +1275,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Cart',
-                        text: 'Sorry, the minimum value was reached'
+                        text: '{{ \App\CentralLogics\translate('Sorry, the minimum value was reached') }}'
                     });
                     $(this).val($(this).data('oldValue'));
                 }
@@ -1267,47 +1285,33 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Cart',
-                        text: 'Sorry, stock limit exceeded.'
+                        text: '{{ \App\CentralLogics\translate('Sorry, stock limit exceeded') }}.'
                     });
                     $(this).val($(this).data('oldValue'));
                 }
             });
-            $(".input-number").keydown(function(e) {
-                // Allow: backspace, delete, tab, escape, enter and .
-                if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
-                    // Allow: Ctrl+A
-                    (e.keyCode == 65 && e.ctrlKey === true) ||
-                    // Allow: home, end, left, right
-                    (e.keyCode >= 35 && e.keyCode <= 39)) {
-                    // let it happen, don't do anything
-                    return;
-                }
-                // Ensure that it is a number and stop the keypress
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-                    e.preventDefault();
-                }
-            });
+
         }
 
         // remove function getVariantPrice
         function getVariantPrice() {
-                if ($('#add-to-cart-form input[name=quantity]').val() > 0) {
-                    $.ajaxSetup({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
-                        }
-                    });
-                    $.ajax({
-                        type: "POST",
-                        url: '{{ route('admin.product.variant-price') }}',
-                        data: $('#add-to-cart-form').serializeArray(),
-                        success: function (data) {
-                            $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
-                            $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
-                        }
-                    });
-                }
+            if ($('#add-to-cart-form input[name=quantity]').val() > 0) {
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
+                    }
+                });
+                $.ajax({
+                    type: "POST",
+                    url: '{{ route('admin.product.variant-price') }}',
+                    data: $('#add-to-cart-form').serializeArray(),
+                    success: function(data) {
+                        $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
+                        $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
+                    }
+                });
             }
+        }
 
         function update_order_item(form_id = 'add-to-cart-form') {
             $.ajaxSetup({
