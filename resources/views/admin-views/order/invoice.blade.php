@@ -48,7 +48,7 @@
                 </center>
                 <hr class="non-printable">
             </div>
-            <div class="col-5">
+            <div class="col-6">
                 <div class="text-center pt-4 mb-3">
                     <h2 style="line-height: 1">
                         {{ \App\Model\BusinessSetting::where(['key' => 'restaurant_name'])->first()->value }}</h2>
@@ -127,7 +127,7 @@
                                         @endif
 
                                         @foreach (json_decode($detail['add_on_ids'], true) as $key2 => $addon)
-                                           {{--  @php($addon = \App\Model\AddOn::find($id)) --}}
+                                            {{-- @php($addon = \App\Model\AddOn::find($id)) --}}
 
                                             @if ($key2 == 0)
                                                 <strong><u>{{ \App\CentralLogics\translate('addons') }}
@@ -168,10 +168,12 @@
                     <div class="col-md-7 col-lg-7">
                         <dl class="row text-right" style="color: black!important;">
                             <dt class="col-6">Items Price:</dt>
-                            <dd class="col-6">{{ $sub_total . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
+                            <dd class="col-6">
+                                {{ $sub_total . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
                             </dd>
                             <dt class="col-6">Tax / VAT:</dt>
-                            <dd class="col-6">{{ $total_tax . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
+                            <dd class="col-6">
+                                {{ $total_tax . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
                             </dd>
                             <dt class="col-6">Addon Cost:</dt>
                             <dd class="col-6">
@@ -185,7 +187,8 @@
                             </dd>
                             <dt class="col-6">Coupon Discount:</dt>
                             <dd class="col-6">
-                                - {{ $order['coupon_discount_amount'] . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
+                                -
+                                {{ $order['coupon_discount_amount'] . ' ' . \App\CentralLogics\Helpers::currency_symbol() }}
                             </dd>
                             <dt class="col-6">Delivery Fee:</dt>
                             <dd class="col-6">
